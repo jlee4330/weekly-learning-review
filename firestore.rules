@@ -1,0 +1,8 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  // All data access goes through the authenticated server. Admin SDK bypasses
+  // these rules; server verifies ownership, enrollment, and instructor claims.
+  match /{document=**} { allow read, write: if false; }
+ }
+}

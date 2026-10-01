@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "title": "Introduction to the course",
+    "sourceSummary": "Data-Driven AI Service (core components), Probabilistic System, Bayes’ Theorem, Foundation Models (Opportunity and Challenges).",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 2,
+    "title": "LLM & Prompt Engineering - Part 1",
+    "sourceSummary": "Brief introduction to Neural Network and LLM, Prompt Engineering (Chain-of-Thought, Zero/One/Few-shot, Text/Multimodal Prompting).",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 3,
+    "title": "LLM & Prompt Engineering - Part 2",
+    "sourceSummary": "Brief introduction to Neural Network and LLM, Prompt Engineering (Chain-of-Thought, Zero/One/Few-shot, Text/Multimodal Prompting).",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 4,
+    "title": "Knowledge-Augmented AI Systems - Part 1",
+    "sourceSummary": "RAG, Memory, and Tool, Vector Embedding.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 5,
+    "title": "Knowledge-Augmented AI Systems - Part 2",
+    "sourceSummary": "RAG, Memory, and Tool, Vector Embedding.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 6,
+    "title": "Agentic AI Systems - Part 1",
+    "sourceSummary": "Single vs. Multi-Agent systems, Orchestration, Routing, and Hierarchical Patterns.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 7,
+    "title": "Agentic AI Systems - Part 2",
+    "sourceSummary": "Single vs. Multi-Agent systems, Orchestration, Routing, and Hierarchical Patterns.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 8,
+    "title": "Midterm Exam",
+    "sourceSummary": "No exam in this course.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": false
+  },
+  {
+    "id": 9,
+    "title": "Knowledge-Augmented AI - Part 3",
+    "sourceSummary": "LLM wiki, OKF (Open Knowledge Format).",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 10,
+    "title": "Evaluating AI Systems - Part 1",
+    "sourceSummary": "Qualitative vs. Quantitative metrics for AI systems, LLM-as-a-Judge.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 11,
+    "title": "Evaluating AI Systems - Part 2",
+    "sourceSummary": "Qualitative vs. Quantitative metrics for AI systems, LLM-as-a-Judge.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 12,
+    "title": "Agency and Initiatives",
+    "sourceSummary": "Mixed-initiative systems: Who takes the lead when?, Human-in-the-Loop verification for critical workflows, Design patterns for co-creative writing, coding, and sketching assistants.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 13,
+    "title": "Responsibility and Safety",
+    "sourceSummary": "Bias and representation challenges in foundational models, Guardrail frameworks: Guardrails AI, NeMo Guardrails, AI Red Teaming: Simulating adversarial prompts to discover system vulnerabilities, Transparency and system explanations for users.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 14,
+    "title": "AI-native Interfaces",
+    "sourceSummary": "Beyond the Chatbox: Form factors for AI integrations, Generative UI: Dynamic interface rendering based on model outputs, Visualizing AI uncertainty and system limits, Micro-animations for progressive response streaming.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 15,
+    "title": "AI Research Trends & Open Challenges",
+    "sourceSummary": "Sim2Real for service design.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": true
+  },
+  {
+    "id": 16,
+    "title": "Final Exam",
+    "sourceSummary": "No exam in this course.",
+    "source": "dasd2026/src/components/Schedule.jsx",
+    "reviewAvailable": false
+  }
+]
