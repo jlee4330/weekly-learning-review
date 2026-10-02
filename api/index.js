@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     console.error("SERVER_LOAD_FAILED", error);
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
-    return res.end(JSON.stringify({ error: "SERVER_LOAD_FAILED", detail: error.message, code: error.code || null }));
+    return res.end(JSON.stringify({ error: "SERVER_LOAD_FAILED", detail: error.message, code: error.code || null, node: process.version }));
   }
   return app(req, res);
 }
