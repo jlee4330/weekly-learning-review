@@ -96,10 +96,14 @@ async function getSession(req, staff = false) {
     throw Object.assign(Error("FORBIDDEN"), { status: 403 });
   return s;
 }
-// In-progress conversations always pick up the latest week content; completed ones keep the snapshot they were evaluated with.
+// A conversation session stores only its state and messages: the week content is read fresh for every
+// connection (only its version is recorded), and the old question-by-question fields are dropped.
+const LEGACY_FIELDS = ["courseContext", "questions", "index", "followUp", "turns", "draft", "questionAskedAt", "pendingDecision", "questionVersion"];
 function prepareConversation(s) {
   const content = weekContent(s.weekId);
-  return { ...asConversation(s), language: "en", conversationVersion: "conversation-2", courseContextVersion: content.version, courseContext: content };
+  const conversation = { ...asConversation(s), language: "en", conversationVersion: "conversation-2", courseContextVersion: content.version };
+  for (const field of LEGACY_FIELDS) delete conversation[field];
+  return conversation;
 }
 const publicSession = (s) => {
   const { evaluationLease, ...rest } = s;

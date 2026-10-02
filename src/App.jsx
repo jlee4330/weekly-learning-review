@@ -143,10 +143,9 @@ function App() {
     voice.current?.close();
     voice.current = null;
   }
-  // Ending a conversation returns to the list with a short congratulation; feedback is generated in the background.
+  // Ending a conversation returns to the list with a short congratulation. Only the transcript is kept; no AI evaluation runs.
   function finishConversation(s) {
     update(s);
-    evaluateSession(s);
     navigate("reviews");
     setDone(`Nice work! You've finished your Week ${String(s.weekId).padStart(2, "0")} review.`);
   }
