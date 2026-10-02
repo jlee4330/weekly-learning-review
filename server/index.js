@@ -292,6 +292,8 @@ app.post(
   "/api/sessions/:id/evaluate",
   handler(async (req, res) => {
     const s = await getSession(req);
+    // Voice conversations keep only their transcript; an outdated page asking for feedback is ignored.
+    if (s.mode === "conversation") return res.json(publicSession(s));
     if (s.status !== "completed") throw Error("INCOMPLETE");
     if (s.evaluationStatus === "ready" || s.evaluationStatus === "reviewed")
       return res.json(publicSession(s));
