@@ -19,7 +19,7 @@ test('Week 1 dialogue uses lecture content, not the old foundation-model-only dr
   const prompt = conversationInstructions({messages:[],questions:[{objective:'WRONG DRAFT TOPIC'}]},weeks[0],weekContent(1));
   assert(prompt.includes('Bayes')); assert(prompt.includes('governance')); assert(prompt.includes('probability-based'));
   assert(prompt.includes('QUESTION GUIDE')); assert(prompt.includes('w01-q03')); assert(prompt.includes('exactly 3 questions')); assert(prompt.includes("That's the end of today's review"));
-  assert(prompt.includes('NEVER state the answer')); assert(prompt.includes('Partly right')); assert(prompt.includes("Let's now move on to the next question.")); assert(!prompt.includes('2. UNDERSTAND'));
+  assert(prompt.includes('NEVER state the answer')); assert(prompt.includes('Partly right')); assert(prompt.includes('do not say the key term')); assert(prompt.includes("Let's now move on to the next question.")); assert(!prompt.includes('2. UNDERSTAND'));
   assert(!prompt.includes('WRONG DRAFT TOPIC'));
   assert(prompt.includes('Speak English only')); assert(prompt.includes('Then WAIT for the student'));
 });

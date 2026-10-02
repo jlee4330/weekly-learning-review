@@ -3,7 +3,7 @@ import { ChevronLeft, Pause, Play, RefreshCw, RotateCcw, X } from 'lucide-react'
 import { RealtimeConversation } from '../services/conversation-voice';
 import { repository } from '../services/api';
 import { reviewErrorMessage } from '../services/errors';
-import { splitQuestion } from '../services/question-split';
+import { splitQuestion, reviewProgress } from '../services/question-split';
 import { weekQuestions } from '../../content/weeks/index.js';
 
 export default function ConversationReview({ session, deviceId, onUpdate, onComplete, onLeave }) {
@@ -69,12 +69,13 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
   const guide = weekQuestions[session.weekId];
   const knownQuestions = [guide?.opening, ...(guide?.questions || []).map(q => q.question)].filter(Boolean);
   const [lead, question, tail] = splitQuestion(agent?.text || '', knownQuestions);
+  const progress = reviewProgress(messages, guide);
   useEffect(() => { const pin = () => { const el = stage.current; if (el) el.scrollTop = el.scrollHeight; }; const frame = requestAnimationFrame(pin); document.fonts?.ready.then(pin); return () => cancelAnimationFrame(frame); }, [agent?.text]);
   const labels = { connecting: t('Connecting…', '연결 중…'), listening: t('I’m listening', '이야기를 듣고 있어요'), thinking: t('Thinking with you…', '함께 생각하고 있어요…'), speaking: t('Speaking…', '학습 에이전트가 이야기하고 있어요'), paused: t('Conversation paused', '대화가 잠시 멈췄어요'), error: t('Connection interrupted', '연결이 끊어졌어요') };
   const micIssue = state === 'listening' && (signal === 'muted' || signal === 'disconnected');
   const level = Math.min(1, (bars.at(-1) + bars.at(-2) + bars.at(-3)) / 3 * 1.6);
   return <div className="continuous-conversation">
-    <div className="conversation-meta"><button className="setup-week-link" disabled={busy} onClick={back} aria-label={t('Back to all weekly reviews', '전체 주차별 리뷰로 돌아가기')} title={t('All weekly reviews', '전체 주차별 리뷰')}><span className="setup-week-arrow"><ChevronLeft size={15} /></span><span>WEEK {String(session.weekId).padStart(2,'0')}</span></button><button className="restart-control" disabled={busy} onClick={reset}><RotateCcw size={15}/>{t('Restart', '처음부터 다시 시작')}</button></div>
+    <div className="conversation-meta"><button className="setup-week-link" disabled={busy} onClick={back} aria-label={t('Back to all weekly reviews', '전체 주차별 리뷰로 돌아가기')} title={t('All weekly reviews', '전체 주차별 리뷰')}><span className="setup-week-arrow"><ChevronLeft size={15} /></span><span>WEEK {String(session.weekId).padStart(2,'0')}</span></button>{progress && <span className="question-count" aria-live="polite">{progress.done ? t('All questions done') : t(`Question ${progress.current} of ${progress.total}`)}</span>}<button className="restart-control" disabled={busy} onClick={reset}><RotateCcw size={15}/>{t('Restart', '처음부터 다시 시작')}</button></div>
     <div className="agent-surface">
     <section className="agent-card" ref={stage}>{agent ? <>{lead && <p className="agent-lead">{lead}</p>}{question && <h1 className={`agent-question${question.length > 110 ? ' long' : ''}`}>{question}</h1>}{question && tail && <p className="agent-tail">{tail}</p>}</> : <h1 className="agent-question">{t('Your conversation is about to begin.', '곧 대화가 시작됩니다.')}</h1>}</section>
     </div>
@@ -94,9 +95,9 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
           : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
         <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { await voice.current.drain(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>
       </div>
+      {state === 'paused' && recording && <div className="console-playback"><RecordingAudio src={recording}/></div>}
     </section>
     {error && <div role="alert" className="notice">{error} {!saved && <button onClick={() => action(flush)}>{t('Retry saving', '저장 재시도')}</button>}</div>}
-    {state === 'paused' && recording && <div className="conversation-playback"><RecordingAudio src={recording}/></div>}
     <details className="conversation-history"><summary>{t('Conversation transcript', '대화 기록')} <small>{saved ? t('Saved', '저장됨') : t('Saving…', '저장 중…')}</small></summary>{messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === 'student' ? t('You', '나') : t('Agent', '학습 에이전트')}</strong><p>{m.text}</p>{!m.complete && <small>{t('Transcription in progress or interrupted', '음성 인식 중이거나 중단된 기록')}</small>}{m.interrupted && <small>{t('Interrupted', '발화 중단됨')}</small>}</div>)}</details>
   </div>;
 }

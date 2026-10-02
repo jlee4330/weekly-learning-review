@@ -173,6 +173,12 @@ Realtime 모델이 어떤 턴에 답할 때 참고하는 정보는 아래 세 �
 
 ---
 
+## 5-1. Firestore 대화 기록
+
+- **End를 누를 때만** 저장합니다(`POST /complete`). 대화 중 자동 저장과 평가 완료 때는 쓰지 않습니다.
+- **Restart, 뒤로가기, Reset all**을 하면 그 주차 필드(`WeekN`)를 Firestore에서 지웁니다.
+- 구조: `students/{학번}` 문서의 `WeekN` 필드에 `[{ role, text, at }, …]`가 들어갑니다. 같은 주차를 다시 마치면 새 대화로 덮어씁니다.
+
 ## 6. 평가 (judge) — Realtime과 분리
 
 - 모델: `OPENAI_JUDGE_MODEL`(기본 `gpt-4.1`), Responses API, `json_schema` strict 출력

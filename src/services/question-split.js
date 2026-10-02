@@ -38,3 +38,26 @@ export function splitQuestion(text, known = []) {
   if (short && last > 0 && !/!\s*$/.test(sentences[last - 1])) first -= 1;
   return [sentences.slice(0, first).join("").trim(), sentences.slice(first, last + 1).join("").trim(), sentences.slice(last + 1).join("").trim()];
 }
+
+const words = (text) => tokenize(text).map((t) => t.word);
+// True when `phrase` appears in `text` word for word (punctuation and case ignored).
+function containsWords(text, phrase) {
+  const t = words(text), p = words(phrase);
+  if (!p.length || p.length > t.length) return false;
+  for (let i = 0; i + p.length <= t.length; i++) if (p.every((w, k) => t[i + k] === w)) return true;
+  return false;
+}
+
+// Progress through a fixed question set, read from what the agent has said:
+// the furthest guide question it has asked, and whether it has spoken the closing line.
+export function reviewProgress(messages, guide) {
+  const questions = (guide?.questions || []).filter((q) => q.type);
+  if (!questions.length) return null;
+  const said = messages.filter((m) => m.role === "assistant" && m.text).map((m) => m.text);
+  let current = 0;
+  questions.forEach((q, i) => { if (said.some((text) => containsWords(text, q.question))) current = Math.max(current, i + 1); });
+  // The closing is matched on its first sentence, which the agent is told to say exactly.
+  const closing = guide.closing?.split(/(?<=[.!?])\s/)[0];
+  const done = !!closing && said.some((text) => containsWords(text, closing));
+  return { total: questions.length, current: done ? questions.length : Math.max(current, 1), done };
+}

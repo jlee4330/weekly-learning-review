@@ -1,11 +1,9 @@
-import courseAuth from "../config/course-auth.json" with { type: "json" };
-import { initializeApp as initializeAdminApp } from "firebase-admin/app";
+import { verifyCourseLogin } from "./firebase-admin.js";
 import { weekContent } from "./course-content.js";
 import { createTranscriptStore } from "./transcript-store.js";
 import { evaluation, validateEvidence } from "./evaluation.js";
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { getAuth } from "firebase-admin/auth";
 import { fileURLToPath } from "node:url";
 import { createLocalStore, createCloudStore } from "./storage.js";
 import { allowLocalRequest } from "./local-access.js";
@@ -29,19 +27,28 @@ import {
 } from "../shared/config.js";
 const local = process.env.REVIEW_STORAGE === "local";
 if (local && process.env.NODE_ENV === "production") throw Error("Local storage is for loopback development only. Configure Firebase for deployment.");
+// Local development can skip sign-in; every other setup verifies the student's course-website login.
 const localFirebaseAuth = local && process.env.REVIEW_AUTH === "firebase";
-if (localFirebaseAuth) initializeAdminApp({ projectId: process.env.FIREBASE_PROJECT_ID || courseAuth.firebase.projectId });
+// Any signed-in course account may use the review unless REQUIRE_ENROLLMENT=true (then courses/{id}/members/{uid} must exist).
+const requireEnrollment = process.env.REQUIRE_ENROLLMENT === "true";
 const store = local
   ? createLocalStore(process.env.REVIEW_DATA_FILE || fileURLToPath(new URL("../.data/reviews.json", import.meta.url)))
   : await createCloudStore(reviewConfig.courseId);
 const patch = (id, fields) => store.mutate(id, s => ({ ...s, ...fields }));
 const transcripts = await createTranscriptStore();
-// Best-effort copy of the latest session state to the per-student transcript database.
+// Best-effort copy of a finished conversation to the per-student transcript database.
+// Written when the student presses End; removed when that week is restarted or reset.
 function mirror(session, user) {
   if (!transcripts || !session) return;
   transcripts.save(session, user).catch((error) => console.error("TRANSCRIPT_MIRROR_FAILED", error.message));
 }
+// Restarting or resetting a week also removes its transcript from Firestore.
+function unmirror(session, user) {
+  if (!transcripts || !session) return;
+  transcripts.clear(session, user).catch((error) => console.error("TRANSCRIPT_CLEAR_FAILED", error.message));
+}
 const app = express();
+if (process.env.VERCEL) app.set("trust proxy", 1);
 app.use(express.json({ limit: "100kb" }));
 app.use("/api", async (req, res, next) => {
   if (local) {
@@ -49,10 +56,7 @@ app.use("/api", async (req, res, next) => {
     if (!localFirebaseAuth) { req.user = { uid: "local-student" }; return next(); }
   }
   try {
-    req.user = await getAuth().verifyIdToken(
-      req.headers.authorization?.replace(/^Bearer /, ""),
-      !local,
-    );
+    req.user = await verifyCourseLogin(req.headers.authorization?.replace(/^Bearer /, ""));
     next();
   } catch {
     res.status(401).json({ error: "AUTH_REQUIRED" });
@@ -70,7 +74,7 @@ const isStaff = (u) =>
   Array.isArray(u.instructorCourses) &&
   u.instructorCourses.includes(reviewConfig.courseId);
 async function enrolled(req) {
-  if (isStaff(req.user)) return;
+  if (!requireEnrollment || isStaff(req.user)) return;
   if (!(await store.enrolled(req.user.uid)))
     throw Object.assign(Error("COURSE_ENROLLMENT_REQUIRED"), { status: 403 });
 }
@@ -166,7 +170,7 @@ const messageSchema = z.object({
 app.post("/api/sessions/:id/messages", handler(async (req, res) => {
   const s = await getSession(req);
   const { messages } = z.object({ messages: z.array(messageSchema).max(30) }).parse(req.body);
-  mirror(await store.mutate(s.id, current => mergeMessages(current, messages)), req.user);
+  await store.mutate(s.id, current => mergeMessages(current, messages));
   res.json({ ok: true });
 }));
 // TEMP: development reset — clears the transcript and any feedback so the week can be retried.
@@ -178,14 +182,14 @@ app.post("/api/sessions/:id/reset", handler(async (req, res) => {
   const s = await getSession(req);
   if (s.mode !== "conversation") throw Error("NOT_A_CONVERSATION");
   const reset = await store.mutate(s.id, resetConversation);
-  mirror(reset, req.user);
+  unmirror(reset, req.user);
   res.json(publicSession(reset));
 }));
 // Resets every conversation of the signed-in student (local development storage only), including the transcript mirror.
 app.post("/api/dev/reset-all", handler(async (req, res) => {
   if (!local) throw Object.assign(Error("FORBIDDEN"), { status: 403 });
   for (const s of await store.list(req.user.uid))
-    if (s.mode === "conversation") mirror(await store.mutate(s.id, resetConversation), req.user);
+    if (s.mode === "conversation") unmirror(await store.mutate(s.id, resetConversation), req.user);
   const sessions = await store.list(req.user.uid);
   res.json(sessions.map(publicSession).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
 }));
@@ -309,11 +313,11 @@ app.post(
           status: "pending_instructor_review",
           createdAt: new Date().toISOString(),
         });
-      mirror(await patch(s.id, {
+      await patch(s.id, {
         feedback: result.feedback,
         evaluationStatus: "ready",
         evaluationLease: 0,
-      }), req.user);
+      });
       res.json(
         publicSession({
           ...s,
@@ -364,6 +368,9 @@ app.post(
     res.json({ ok: true });
   }),
 );
-app.listen(process.env.PORT || 3001, "127.0.0.1", () =>
-  console.log(`Review API on http://127.0.0.1:${process.env.PORT || 3001} (${local ? "local storage, real OpenAI" : "Firebase"}; transcripts → ${transcripts ? `Firestore ${transcripts.projectId}` : "not mirrored"})`),
-);
+// On Vercel the app is served by api/index.js; locally `npm run server` listens on loopback.
+if (!process.env.VERCEL)
+  app.listen(process.env.PORT || 3001, "127.0.0.1", () =>
+    console.log(`Review API on http://127.0.0.1:${process.env.PORT || 3001} (${local ? "local storage" : `Firestore ${process.env.FIREBASE_PROJECT_ID}`}, real OpenAI; transcripts → ${transcripts ? `Firestore ${transcripts.projectId}` : "not mirrored"})`),
+  );
+export default app;

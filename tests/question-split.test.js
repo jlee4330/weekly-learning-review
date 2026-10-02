@@ -31,3 +31,22 @@ test("without a guide question: last question sentence, short ones keep their se
   assert.deepEqual(splitQuestion("Hi! Why is that?"), ["Hi!", "Why is that?", ""]);
   assert.deepEqual(splitQuestion("Take your time."), ["Take your time.", "", ""]);
 });
+
+import { reviewProgress } from "../src/services/question-split.js";
+test("progress follows the furthest guide question the agent has asked, and finishes on the closing line", () => {
+  const guide = {
+    closing: "That's the end of today's review. Nice work. You can press End conversation whenever you're ready.",
+    questions: [
+      { type: "explain", question: "How is a probability-based system, like an AI model, different from a rules-based system?" },
+      { type: "explain", question: "Besides the AI model itself, what other parts does an AI service need to work well?" },
+      { type: "explain", question: "When we build a foundation model into an interactive service, what are some opportunities it opens up, and what challenges come with it?" },
+    ],
+  };
+  const agent = (text) => ({ role: "assistant", text });
+  const opening = agent("Hi! Welcome. How is a probability-based system, like an AI model, different from a rules-based system?");
+  assert.deepEqual(reviewProgress([], guide), { total: 3, current: 1, done: false });
+  assert.deepEqual(reviewProgress([opening, { role: "student", text: "It learns." }, agent("Can you say more?")], guide), { total: 3, current: 1, done: false });
+  assert.deepEqual(reviewProgress([opening, agent("Nice. Let's now move on to the next question. Besides the AI model itself — what other parts does an AI service need to work well?")], guide), { total: 3, current: 2, done: false });
+  assert.deepEqual(reviewProgress([opening, agent("That's the end of today's review! Nice work.")], guide), { total: 3, current: 3, done: true });
+  assert.equal(reviewProgress([opening], { questions: [{ question: "No type here?" }] }), null);
+});

@@ -52,10 +52,11 @@ export function createLocalStore(filename) {
 }
 
 export async function createCloudStore(courseId) {
-  const { initializeApp, applicationDefault } = await import("firebase-admin/app");
+  const { dataApp } = await import("./firebase-admin.js");
   const { getFirestore } = await import("firebase-admin/firestore");
-  initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID });
-  const db = getFirestore();
+  const app = dataApp();
+  if (!app) throw Error("Set FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT (or a credentials file) for cloud storage.");
+  const db = getFirestore(app);
   const sessions = db.collection("courses").doc(courseId).collection("sessions");
   return {
     enrolled: async uid => (await db.doc(`courses/${courseId}/members/${uid}`).get()).exists,
