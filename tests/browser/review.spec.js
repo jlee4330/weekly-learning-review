@@ -54,7 +54,7 @@ test("English-only demo preserves drafts and reopens feedback", async ({
   await page.locator(".transcript summary").first().click();
   await expect(page.getByText("not sure", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Back to weekly reviews" }).click();
-  await page.getByRole("button", { name: "View reflection" }).click();
+  await page.getByRole("button", { name: "View transcript" }).click();
   await expect(
     page.getByRole("heading", { name: "A little clearer, a little further." }),
   ).toBeVisible();

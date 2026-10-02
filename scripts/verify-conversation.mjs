@@ -9,16 +9,17 @@ import { createServer } from 'vite';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { openingFor } from '../shared/course-dialogue.js';
+import { weekContent } from '../server/course-content.js';
 import { weeks } from '../shared/questions.js';
 const weekId = Number(process.argv[3] || 1);
 const selectedWeek = weeks.find(w => w.id === weekId && w.reviewAvailable);
 assert(selectedWeek, 'Choose a week with a review');
 const dir = await mkdtemp(join(tmpdir(),'wlr-conversation-'));
-const api = spawn(process.execPath,['server/index.js'],{env:{...process.env,PORT:'3193',REVIEW_STORAGE:'local',REVIEW_DATA_FILE:join(dir,'reviews.json')},stdio:['ignore','pipe','pipe']});
+const api = spawn(process.execPath,['server/index.js'],{env:{...process.env,REVIEW_AUTH:'none',PORT:'3193',REVIEW_STORAGE:'local',REVIEW_DATA_FILE:join(dir,'reviews.json')},stdio:['ignore','pipe','pipe']});
 let vite, browser, page;
 try {
   await once(api.stdout,'data');
-  process.env.REVIEW_API_PORT='3193'; process.env.VITE_MODE='local';
+  process.env.VITE_AUTH_PROVIDER='none'; process.env.REVIEW_API_PORT='3193'; process.env.VITE_MODE='local';
   vite = await createServer({server:{host:'127.0.0.1',port:5193,strictPort:true},logLevel:'silent'}); await vite.listen();
   browser = await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
   page = await browser.newPage();
@@ -42,12 +43,12 @@ try {
   await page.getByRole('button',{name:'Test microphone',exact:true}).click();
   await page.getByRole('button',{name:'Start conversation',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.agent-utterance h1')?.textContent.length>60,{},{timeout:60000});
-  await page.waitForFunction(()=>document.querySelector('.conversation-meta')?.textContent.includes('I’m listening'),{},{timeout:45000});
+  await page.waitForFunction(()=>document.querySelector('.voice-status')?.textContent.includes('I’m listening'),{},{timeout:45000});
   await page.evaluate(()=>window.speakFixture());
   await page.waitForFunction(()=>Number(document.querySelector('.continuous-wave')?.getAttribute('aria-valuenow'))>10,{},{timeout:15000});
   await page.waitForFunction(()=>[...document.querySelectorAll('.conversation-history strong')].some(e=>e.textContent==='You'),{},{timeout:60000});
   await page.waitForFunction(()=>document.querySelectorAll('.conversation-history .transcript-turn').length>=3,{},{timeout:60000});
-  await page.waitForFunction(()=>document.querySelector('.conversation-meta')?.textContent.includes('I’m listening'),{},{timeout:45000});
+  await page.waitForFunction(()=>document.querySelector('.voice-status')?.textContent.includes('I’m listening'),{},{timeout:45000});
   await page.getByRole('button',{name:'Pause',exact:true}).click();
   await page.waitForSelector('audio[controls]');
   await page.locator('audio[controls]').evaluate(audio => audio.play());
@@ -57,23 +58,25 @@ try {
   await page.setViewportSize({width:390,height:844});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth));
   await page.screenshot({path:'tests/screenshots/continuous-conversation-mobile.png',fullPage:true});
-  await page.getByRole('button',{name:'Save & leave for now',exact:true}).click();
+  // Leave mid-conversation: wait for the transcript to save, then return to the list.
+  await page.waitForFunction(()=>document.querySelector('.conversation-history summary small')?.textContent === 'Saved',{},{timeout:15000});
+  await page.goto(page.url().split('#')[0]);
   await page.getByRole('button',{name:'Continue review',exact:true}).click();
   await page.getByRole('button',{name:'Test microphone',exact:true}).click();
   await page.getByRole('button',{name:'Continue conversation',exact:true}).click();
   await page.waitForFunction(()=>document.querySelectorAll('.conversation-history .transcript-turn').length>=4,{},{timeout:60000});
-  await page.waitForFunction(()=>document.querySelector('.conversation-meta')?.textContent.includes('I’m listening'),{},{timeout:45000});
+  await page.waitForFunction(()=>document.querySelector('.voice-status')?.textContent.includes('I’m listening'),{},{timeout:45000});
   assert.equal(await page.getByRole('alert').count(),0);
   await page.getByRole('button',{name:'End conversation',exact:true}).click();
-  await page.waitForSelector('.feedback-card',{timeout:90000});
+  await page.waitForSelector('.done-banner',{timeout:90000});
   const data = JSON.parse(await readFile(join(dir,'reviews.json'),'utf8'));
   const records = Object.values(data.sessions); const s = records[0];
-  assert.equal(s.language,'en'); assert.equal(s.courseContextVersion,'course-2026-10-02.1');
+  assert.equal(s.language,'en'); assert.equal(s.courseContextVersion, weekContent(s.weekId).version);
   const normalize = text => text.toLowerCase().replace(/[^a-z0-9]/g,'');
   assert.equal(normalize(s.messages.find(m=>m.role==='assistant').text), normalize(openingFor(selectedWeek)));
   assert.equal(s.status,'completed'); assert.equal(s.mode,'conversation'); assert(s.messages.filter(m=>m.role==='assistant').length>=2); assert(s.messages.some(m=>m.role==='student'&&m.complete)); assert.equal(failures.length,0,failures.join('\n'));
   console.log(JSON.stringify({completed:true,weekId:s.weekId,messages:s.messages.length,feedback:s.evaluationStatus,consoleErrors:failures.length,followup:s.messages.filter(m=>m.role==='assistant')[1]?.text}));
 } catch (error) {
-  if (page) { console.log(await page.evaluate(() => ({events:window.voiceEvents,alerts:[...document.querySelectorAll('[role=alert]')].map(x=>x.textContent), state:document.querySelector('.conversation-meta')?.textContent}))); await page.screenshot({path:'tests/screenshots/conversation-error.png',fullPage:true}); }
+  if (page) { console.log(await page.evaluate(() => ({events:window.voiceEvents,alerts:[...document.querySelectorAll('[role=alert]')].map(x=>x.textContent), state:document.querySelector('.voice-status')?.textContent}))); await page.screenshot({path:'tests/screenshots/conversation-error.png',fullPage:true}); }
   throw error;
 } finally { await browser?.close(); await vite?.close(); api.kill(); await rm(dir,{recursive:true,force:true}); }

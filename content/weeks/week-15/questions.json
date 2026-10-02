@@ -1,0 +1,20 @@
+{
+  "week": 15,
+  "opening": "What do you understand by Sim2Real in the context of service design?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w15-q01",
+      "topic": "AI Research Trends & Open Challenges",
+      "phase": "understand",
+      "question": "What do you understand by Sim2Real in the context of service design?",
+      "lookFor": [
+        "simulation gap",
+        "real environment validation",
+        "transfer limitations"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

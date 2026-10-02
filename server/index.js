@@ -1,4 +1,7 @@
-import courseContext from "./course-context.json" with { type: "json" };
+import courseAuth from "../config/course-auth.json" with { type: "json" };
+import { initializeApp as initializeAdminApp } from "firebase-admin/app";
+import { weekContent } from "./course-content.js";
+import { createTranscriptStore } from "./transcript-store.js";
 import { evaluation, validateEvidence } from "./evaluation.js";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -18,6 +21,7 @@ import {
   followUpCount,
 } from "../shared/engine.js";
 import {
+  isWeekUnlocked,
   reviewConfig,
   dialogueInstructions,
   judgeInstructions,
@@ -25,22 +29,29 @@ import {
 } from "../shared/config.js";
 const local = process.env.REVIEW_STORAGE === "local";
 if (local && process.env.NODE_ENV === "production") throw Error("Local storage is for loopback development only. Configure Firebase for deployment.");
+const localFirebaseAuth = local && process.env.REVIEW_AUTH === "firebase";
+if (localFirebaseAuth) initializeAdminApp({ projectId: process.env.FIREBASE_PROJECT_ID || courseAuth.firebase.projectId });
 const store = local
   ? createLocalStore(process.env.REVIEW_DATA_FILE || fileURLToPath(new URL("../.data/reviews.json", import.meta.url)))
   : await createCloudStore(reviewConfig.courseId);
 const patch = (id, fields) => store.mutate(id, s => ({ ...s, ...fields }));
+const transcripts = await createTranscriptStore();
+// Best-effort copy of the latest session state to the per-student transcript database.
+function mirror(session, user) {
+  if (!transcripts || !session) return;
+  transcripts.save(session, user).catch((error) => console.error("TRANSCRIPT_MIRROR_FAILED", error.message));
+}
 const app = express();
 app.use(express.json({ limit: "100kb" }));
 app.use("/api", async (req, res, next) => {
   if (local) {
     if (!allowLocalRequest(req)) return res.status(403).json({ error: "LOCAL_ACCESS_ONLY" });
-    req.user = { uid: "local-student" };
-    return next();
+    if (!localFirebaseAuth) { req.user = { uid: "local-student" }; return next(); }
   }
   try {
     req.user = await getAuth().verifyIdToken(
       req.headers.authorization?.replace(/^Bearer /, ""),
-      true,
+      !local,
     );
     next();
   } catch {
@@ -71,8 +82,10 @@ async function getSession(req, staff = false) {
     throw Object.assign(Error("FORBIDDEN"), { status: 403 });
   return s;
 }
+// In-progress conversations always pick up the latest week content; completed ones keep the snapshot they were evaluated with.
 function prepareConversation(s) {
-  return { ...asConversation(s), language: "en", conversationVersion: "conversation-2", courseContextVersion: s.courseContextVersion || courseContext.version, courseContext: s.courseContext || courseContext.weeks[s.weekId] };
+  const content = weekContent(s.weekId);
+  return { ...asConversation(s), language: "en", conversationVersion: "conversation-2", courseContextVersion: content.version, courseContext: content };
 }
 const publicSession = (s) => {
   const { evaluationLease, ...rest } = s;
@@ -134,6 +147,7 @@ app.post(
         language: z.literal("en").default("en"),
       })
       .parse(req.body);
+    if (!isWeekUnlocked(weekId)) throw Object.assign(Error("WEEK_LOCKED"), { status: 403 });
     const s = prepareConversation(createSession(weekId, "en", req.user.uid, randomUUID()));
     await store.create(s);
     res.json(s);
@@ -152,12 +166,32 @@ const messageSchema = z.object({
 app.post("/api/sessions/:id/messages", handler(async (req, res) => {
   const s = await getSession(req);
   const { messages } = z.object({ messages: z.array(messageSchema).max(30) }).parse(req.body);
-  await store.mutate(s.id, current => mergeMessages(current, messages));
+  mirror(await store.mutate(s.id, current => mergeMessages(current, messages)), req.user);
   res.json({ ok: true });
+}));
+// TEMP: development reset — clears the transcript and any feedback so the week can be retried.
+function resetConversation(current) {
+  const { feedback, completedAt, evaluationLease, ...rest } = current;
+  return { ...rest, messages: [], status: "in_progress", evaluationStatus: "not_started", updatedAt: new Date().toISOString() };
+}
+app.post("/api/sessions/:id/reset", handler(async (req, res) => {
+  const s = await getSession(req);
+  if (s.mode !== "conversation") throw Error("NOT_A_CONVERSATION");
+  const reset = await store.mutate(s.id, resetConversation);
+  mirror(reset, req.user);
+  res.json(publicSession(reset));
+}));
+// Resets every conversation of the signed-in student (local development storage only), including the transcript mirror.
+app.post("/api/dev/reset-all", handler(async (req, res) => {
+  if (!local) throw Object.assign(Error("FORBIDDEN"), { status: 403 });
+  for (const s of await store.list(req.user.uid))
+    if (s.mode === "conversation") mirror(await store.mutate(s.id, resetConversation), req.user);
+  const sessions = await store.list(req.user.uid);
+  res.json(sessions.map(publicSession).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
 }));
 app.post("/api/sessions/:id/complete", handler(async (req, res) => {
   const s = await getSession(req);
-  try { res.json(publicSession(await store.mutate(s.id, completeConversation))); }
+  try { const done = await store.mutate(s.id, completeConversation); mirror(done, req.user); res.json(publicSession(done)); }
   catch (error) { if (error.message === "NO_STUDENT_SPEECH") error.status = 400; throw error; }
 }));
 app.post(
@@ -231,6 +265,7 @@ app.post(
   handler(async (req, res) => {
     const s = await getSession(req);
     if (s.status !== "in_progress") throw Error("COMPLETE");
+    if (!isWeekUnlocked(s.weekId)) throw Object.assign(Error("WEEK_LOCKED"), { status: 403 });
     res.set("Cache-Control", "no-store");
     res.json(await createRealtimeToken(s.language, s));
   }),
@@ -274,11 +309,11 @@ app.post(
           status: "pending_instructor_review",
           createdAt: new Date().toISOString(),
         });
-      await patch(s.id, {
+      mirror(await patch(s.id, {
         feedback: result.feedback,
         evaluationStatus: "ready",
         evaluationLease: 0,
-      });
+      }), req.user);
       res.json(
         publicSession({
           ...s,
@@ -330,5 +365,5 @@ app.post(
   }),
 );
 app.listen(process.env.PORT || 3001, "127.0.0.1", () =>
-  console.log(`Review API on http://127.0.0.1:${process.env.PORT || 3001} (${local ? "local storage, real OpenAI" : "Firebase"})`),
+  console.log(`Review API on http://127.0.0.1:${process.env.PORT || 3001} (${local ? "local storage, real OpenAI" : "Firebase"}; transcripts → ${transcripts ? `Firestore ${transcripts.projectId}` : "not mirrored"})`),
 );

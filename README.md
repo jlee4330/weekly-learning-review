@@ -1,5 +1,7 @@
 # Weekly Learning Review
 
+Current course login: email/password Firebase Auth from the existing course project, with UID-separated local review storage. Public settings: [`config/course-auth.json`](config/course-auth.json). Setup, verification limits, and shared-project precautions: [`config/README.md`](config/README.md). No student passwords or account exports are included.
+
 React 19 + Vite 기반의 ID40018 주차별 구술 리뷰. 원본 `../dasd2026` 파일·설정은 수정하지 않았습니다.
 
 ## 실행
@@ -69,12 +71,12 @@ npm run server
 npm run dev
 ```
 
-`check:connection`은 Realtime 임시 토큰 발급·평가 모델 조회와 Firestore 서버 연결을 확인합니다. 키 값이나 제공자의 응답 본문을 출력하지 않습니다. `activate:live`는 같은 점검을 통과한 경우에만 `.env`의 `VITE_MODE`를 `live`로 변경합니다. 이후 UI에서 데모 표시·예시 동작 대신 실제 연결을 사용합니다. 데모 소스는 아직 삭제하지 않았습니다. 실제 Google 로그인·WebRTC 음성·LLM 평가 성공 여부는 별도로 확인해야 하며, 모델 조회 성공만으로 전체 통합이 검증된 것은 아닙니다.
+`check:connection`은 Realtime 임시 토큰 발급·평가 모델 조회와 Firestore 서버 연결을 확인합니다. 키 값이나 제공자의 응답 본문을 출력하지 않습니다. `activate:live`는 같은 점검을 통과한 경우에만 `.env`의 `VITE_MODE`를 `live`로 변경합니다. 이후 UI에서 데모 표시·예시 동작 대신 실제 연결을 사용합니다. 데모 소스는 아직 삭제하지 않았습니다. 실제 이메일/비밀번호 로그인·WebRTC 음성·LLM 평가 성공 여부는 별도로 확인해야 하며, 모델 조회 성공만으로 전체 통합이 검증된 것은 아닙니다.
 
 ## 실제 연결
 
 1. `.env.example`을 참고해 `.env`의 `VITE_MODE=live`, `REVIEW_STORAGE=firebase`를 설정합니다. 기존 키를 덮어쓰지 않도록 주의합니다.
-2. Firebase 프로젝트를 만들고 Authentication의 Google provider, 허용 도메인(localhost 및 배포 도메인), Firestore를 설정합니다. 브라우저용 Firebase 설정을 `VITE_FIREBASE_*`에 입력합니다. 기존 수업 사이트와 **별도 Firebase 프로젝트 사용을 권장**합니다.
+2. Firebase 프로젝트를 만들고 Authentication의 Email/Password provider, 허용 도메인(localhost 및 배포 도메인), Firestore를 설정합니다. 브라우저용 Firebase 설정을 `VITE_FIREBASE_*`에 입력합니다. 기존 수업 사이트와 **별도 Firebase 프로젝트 사용을 권장**합니다.
 3. 서버에 `FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`(로컬 서비스 계정 파일의 절대 경로 또는 배포 환경의 ADC), `OPENAI_API_KEY`를 설정합니다. 서비스 계정 파일은 저장소 외부에 둡니다. OpenAI 비밀키/서비스 계정에 `VITE_`를 붙이지 않습니다.
 4. 관리자 신뢰 환경에서 `courses/id40018-2026/members/{firebaseAuthUid}` 문서를 만들어 학생을 등록합니다. 로그인만으로 수업 접근 권한을 부여하지 않습니다.
 5. 교수자 계정에는 Admin SDK로 custom claim `instructorCourses: ['id40018-2026']`를 부여합니다. 기존 custom claims를 보존해서 병합하세요. 변경 후 재로그인해야 합니다. 학생이 자기 역할이나 멤버십을 바꾸는 API는 없습니다.
@@ -97,8 +99,11 @@ Transcript는 부분 발화도 약 1.5초 단위로 저장하며, 최종 발화�
 | 파일 | 용도 |
 | --- | --- |
 | `shared/conversation-config.js` | 인사→이해→적용→성찰 대화 규칙, 주제 범위 제한, 자동 발화 감지, 평가 지침 |
-| `shared/course-dialogue.js` | 주차별 고정 인사와 첫 질문 (서비스 작성 문구) |
-| `server/course-context.json` | 수업 원본에서 가져온 주차별 학습 목표·주제·본문 발췌·출처와 버전 |
+| `content/weeks/week-NN/summary.md` | 주차별 수업 요약. 맨 위 front matter(`week`, `title`, `status`, `scope`, `source`) + 본문이 그대로 대화 에이전트에게 전달됩니다 |
+| `content/weeks/week-NN/questions.json` | 주차별 오프닝(`opening`)과 질문 가이드(`questions`: `phase` understand/connect/reflect, `lookFor`, `followUps`, `misconceptions`) |
+| `content/weeks/index.js` | 주차별 `questions.json` 모음 (브라우저·서버 공용) |
+| `server/course-content.js` | `summary.md`·`questions.json`을 읽어 에이전트 컨텍스트와 내용 버전(hash)을 만듭니다. 파일을 고치면 서버 재시작 없이 다음 대화부터 반영됩니다 |
+| `shared/course-dialogue.js` | 주차별 고정 인사 문구 (첫 질문은 `questions.json`의 `opening`) |
 | `shared/conversation.js` | 발화 병합·순서·완료·이전 기록 변환 |
 | `src/components/ConversationReview.jsx` | 연속 대화 화면·자동 저장·중단·재개 |
 | `src/services/conversation-voice.js` | Realtime 자동 대화·스트리밍 transcript·일시 정지 |

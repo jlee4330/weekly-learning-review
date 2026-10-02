@@ -1,0 +1,80 @@
+{
+  "week": 1,
+  "opening": "How is a probability-based system, like an AI model, different from a rules-based system?",
+  "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
+  "note": "Three short explain-in-your-own-words questions, asked in order. A good explanation moves on; a weak one gets discussion and hints (each hint is a concrete everyday scene, getting closer to the idea), never the answer.",
+  "questions": [
+    {
+      "id": "w01-q01",
+      "type": "explain",
+      "phase": "understand",
+      "topic": "Rules-based vs. probability-based systems",
+      "objective": "Distinguish probabilistic AI behavior from deterministic UI/UX design.",
+      "question": "How is a probability-based system, like an AI model, different from a rules-based system?",
+      "goodEnough": "Explains that a rules-based system follows behavior people wrote in advance, so the same input gives the same output, while a probability-based system learns patterns from data and picks likely outputs, so results can vary.",
+      "lookFor": [
+        "rules-based: behavior written by people, same input gives same output",
+        "probability-based: behavior learned from data, outputs can vary",
+        "errors in AI can come from data or context, not just code",
+        "designers shape AI behavior indirectly (prompts, data, examples)"
+      ],
+      "hints": [
+        "Picture a vending machine: you press B3 and get the same drink every time. Now picture asking a friend for advice. Which one works more like an AI model?",
+        "Someone set up the vending machine in advance. Where does your friend's advice come from instead?",
+        "If you asked that friend the same question on two different days, would you get exactly the same words?"
+      ],
+      "misconceptions": [
+        "different answers mean the AI is broken",
+        "AI is just a very large set of rules"
+      ]
+    },
+    {
+      "id": "w01-q02",
+      "type": "explain",
+      "phase": "understand",
+      "topic": "What is a data-driven AI service?",
+      "objective": "Explain how data, models, interaction, service logic, evaluation, and governance work together.",
+      "question": "Besides the AI model itself, what other parts does an AI service need to work well?",
+      "goodEnough": "Names at least two non-model parts (data, interaction/interface, service logic, evaluation and governance) and briefly says what one of them does.",
+      "lookFor": [
+        "data such as watch history or ratings",
+        "the interface where you see and react to it",
+        "service rules such as age ratings or not repeating",
+        "checking that it works and is fair, and protecting data"
+      ],
+      "hints": [
+        "Imagine Netflix with only the AI model and nothing else. What would it need to know about you first?",
+        "Where do you actually see the recommendation, and what can you click on?",
+        "What stops Netflix from recommending a horror movie to a 7-year-old, even if the model picked it?",
+        "How would Netflix find out whether its recommendations are actually good?"
+      ],
+      "misconceptions": [
+        "the model is the whole service"
+      ]
+    },
+    {
+      "id": "w01-q03",
+      "type": "explain",
+      "phase": "understand",
+      "topic": "Integrating foundation models into interactive systems",
+      "objective": "Explain how existing foundation models are constrained and transformed for interactive services, including their opportunities and challenges.",
+      "question": "When we build a foundation model into an interactive service, what are some opportunities it opens up, and what challenges come with it?",
+      "goodEnough": "Gives at least one concrete opportunity and at least one concrete challenge from integrating foundation models into interactive systems, and briefly explains why each matters for users or designers.",
+      "lookFor": [
+        "opportunities: natural-language or multimodal interaction, fast creation of content, flexible support for many goals, personalized help, mixed-initiative collaboration, tool use and automation, faster prototyping",
+        "challenges: hallucination or wrong answers, inconsistent behavior, hard to explain, bias, privacy and memory, overreliance on AI, hard to evaluate, unclear responsibility",
+        "a flexible general chatbot can leave users unsure what to ask or how to judge answers",
+        "the design question is what interaction to build around the model so it is useful, understandable and controllable"
+      ],
+      "hints": [
+        "Before AI, you clicked through menus to get things done. What changes when you can just say what you want in plain words?",
+        "What could happen if an AI gives a confident but wrong answer to someone who trusts it?",
+        "What if the AI remembers personal things you told it, or no one is sure who is responsible when it makes a mistake?"
+      ],
+      "misconceptions": [
+        "more capability always makes a better service",
+        "challenges will disappear once models get better"
+      ]
+    }
+  ]
+}

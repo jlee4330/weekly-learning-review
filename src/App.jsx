@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BookOpen,
   Check,
+  Lock,
   CheckCircle2,
   ChevronLeft,
   LogOut,
@@ -12,20 +13,28 @@ import {
   MicOff,
   MoreHorizontal,
   RefreshCw,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   Volume2,
   X,
 } from "lucide-react";
 import { weeks, titleOf, objectiveOf } from "../shared/questions";
+import { isWeekUnlocked } from "../shared/config";
 import { currentQuestion } from "../shared/engine";
-import { isDemo, isLocal, localUser, repository, auth, login, logout } from "./services/api";
+import { isDemo, isLocal, localUser, requiresLogin, repository, auth, logout } from "./services/api";
 import { onAuthStateChanged } from "firebase/auth";
 import { checkMicrophone, speakDemo, RealtimeVoice } from "./services/voice";
 import { microphoneError } from "./services/microphone";
 import { reviewErrorMessage } from "./services/errors";
 import ConversationReview from "./components/ConversationReview";
+// A session only counts as started once someone has actually spoken (or a demo draft was saved).
+const hasStarted = (s) => !!s && (s.mode === "conversation" ? s.messages?.some((m) => m.text?.trim()) : s.turns?.length > 0 || !!s.draft?.trim());
+import LoginDialog from "./components/LoginDialog";
 function App() {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [done, setDone] = useState("");
+  useEffect(() => { if (!done) return; const id = setTimeout(() => setDone(""), 6000); return () => clearTimeout(id); }, [done]);
   const lang = "en";
   const [page, setPage] = useState("reviews");
   const [sessions, setSessions] = useState([]),
@@ -70,6 +79,7 @@ function App() {
     if (!isDemo && !user) {
       setSessions([]);
       setSession(null);
+      sessionRef.current = null;
       cleanup();
       setPage("reviews");
       return;
@@ -133,6 +143,13 @@ function App() {
     voice.current?.close();
     voice.current = null;
   }
+  // Ending a conversation returns to the list with a short congratulation; feedback is generated in the background.
+  function finishConversation(s) {
+    update(s);
+    evaluateSession(s);
+    navigate("reviews");
+    setDone(`Nice work! You've finished your Week ${String(s.weekId).padStart(2, "0")} review.`);
+  }
   function navigate(p) {
     if (page === "review") {
       setExitOpen(true);
@@ -144,12 +161,14 @@ function App() {
     location.hash = "reviews";
   }
   function update(s) {
+    if (s && requiresLogin && auth.currentUser?.uid !== s.studentId) return;
     sessionRef.current = s;
     setSession(s);
     if (s) setSessions((old) => [s, ...old.filter((x) => x.id !== s.id)]);
   }
   // Background saves and feedback may finish after the student chooses another week.
   function refreshSession(s) {
+    if (requiresLogin && auth.currentUser?.uid !== s.studentId) return;
     setSessions(old => [s, ...old.filter(x => x.id !== s.id)]);
     if (sessionRef.current?.id === s.id) {
       sessionRef.current = s;
@@ -175,6 +194,15 @@ function App() {
     } finally {
       setBusy(false);
     }
+  }
+  // Clears every conversation of the signed-in student (local storage only) and reloads the list.
+  function resetAll() {
+    if (!confirm(t("Reset every week? All your conversations will be cleared."))) return;
+    navigate("reviews");
+    run(async () => {
+      update(null);
+      setSessions(await repository.resetAll());
+    });
   }
   function choose(w, s) {
     cleanup();
@@ -394,23 +422,25 @@ function App() {
   const latest = (id) => sessions.find((s) => s.weekId === id);
   return (
     <div className="app-shell">
+      {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)}/>}
       <div className="workspace">
           <div className="utility-controls">
+            {isLocal && user && <button className="reset-all" disabled={busy} onClick={resetAll}><RotateCcw size={14}/>{t("Reset all")}</button>}
             {isDemo || user ? (
               <details className="account-menu" ref={accountMenu}>
                 <summary aria-label={t("Account information", "계정 정보")}>
                   <span className="avatar">{isDemo ? "S" : user?.displayName?.[0] || "S"}</span>
-                  <span className="account-name">{isDemo ? t("Demo student", "데모 학생") : isLocal ? t("Local session", "로컬 세션") : user.displayName || t("Student", "학생")}</span>
+                  <span className="account-name">{isDemo ? t("Demo student", "데모 학생") : !requiresLogin && isLocal ? t("Local session", "로컬 세션") : user.displayName || user.email || t("Student", "학생")}</span>
                   <ChevronDown size={13}/>
                 </summary>
                 <div className="account-popover">
-                  <span className="account-label">{isLocal ? t("THIS COMPUTER", "현재 컴퓨터") : t("YOUR ACCOUNT", "내 계정")}</span>
-                  <strong>{isDemo ? t("Demo student", "데모 학생") : isLocal ? t("Local session", "로컬 세션") : user.displayName || t("Student", "학생")}</strong>
-                  <small>{isDemo ? t("Local device · not signed in", "현재 기기 · 로그인되지 않음") : isLocal ? t("Live voice · reviews saved on this computer. No cloud account connected.", "실제 음성 연결 · 리뷰는 이 컴퓨터에 저장됩니다. 클라우드 계정은 연결되지 않았습니다.") : user.email}</small>
-                  {!isDemo && !isLocal && <button onClick={()=>run(logout)} disabled={busy}><LogOut size={15}/>{t("Sign out", "로그아웃")}</button>}
+                  <span className="account-label">{!requiresLogin && isLocal ? t("THIS COMPUTER", "현재 컴퓨터") : t("YOUR ACCOUNT", "내 계정")}</span>
+                  <strong>{isDemo ? t("Demo student", "데모 학생") : !requiresLogin && isLocal ? t("Local session", "로컬 세션") : user.displayName || user.email || t("Student", "학생")}</strong>
+                  <small>{isDemo ? t("Local device · not signed in", "현재 기기 · 로그인되지 않음") : !requiresLogin && isLocal ? t("Live voice · reviews saved on this computer. No cloud account connected.", "실제 음성 연결 · 리뷰는 이 컴퓨터에 저장됩니다. 클라우드 계정은 연결되지 않았습니다.") : user.email}</small>
+                  {requiresLogin && <button onClick={()=>run(logout)} disabled={busy}><LogOut size={15}/>{t("Sign out", "로그아웃")}</button>}
                 </div>
               </details>
-            ) : <button className="header-login" disabled={busy} onClick={()=>run(login)}>{t("Sign in with Google", "Google 로그인")}</button>}
+            ) : <button className="header-login" disabled={busy} onClick={()=>setLoginOpen(true)}>Sign in</button>}
           </div>
         <main id="main">
           {error && (
@@ -425,18 +455,9 @@ function App() {
               </button>
             </div>
           )}
-          {!isDemo && !user && (
-            <div className="notice">
-              <span>
-                {t(
-                  "Sign in with your enrolled course account.",
-                  "수업에 등록된 계정으로 로그인해 주세요.",
-                )}
-              </span>
-            </div>
-          )}
           {page === "reviews" && (
-            <>
+            <div className="reviews-page">
+              {done && <div className="done-banner" role="status"><CheckCircle2 size={20}/><span>{done}</span><button className="icon-button" aria-label="Dismiss" onClick={() => setDone("")}><X size={16}/></button></div>}
               <div className="eyebrow">
                 ID40018 DDASD
               </div>
@@ -500,16 +521,18 @@ function App() {
                       filter === "all" ||
                       (filter === "done"
                         ? latest(w.id)?.status === "completed"
-                        : w.reviewAvailable &&
+                        : w.reviewAvailable && isWeekUnlocked(w.id) &&
                           latest(w.id)?.status !== "completed"),
                   )
                   .map((w) => {
                     const s = latest(w.id);
+                    const progress = !w.reviewAvailable ? "none" : !isWeekUnlocked(w.id) ? "locked" : s?.status === "completed" ? "done" : hasStarted(s) ? "progress" : "ready";
+                    const open = progress !== "none" && progress !== "locked";
                     return (
                       <article
                         className={
                           "week-row " +
-                          (!w.reviewAvailable ? "unavailable" : "")
+                          (!open ? "unavailable" : "")
                         }
                         key={w.id}
                       >
@@ -520,39 +543,40 @@ function App() {
                         <div className="week-info">
                           <h3>{titleOf(w, l)}</h3>
                           <p>{objectiveOf(w, l)}</p>
-                          <span
-                            className={
-                              "status " +
-                              (s?.status === "completed" ? "done" : "")
-                            }
-                          >
-                            {s?.status === "completed" ? (
+                          <span className={`status ${progress}`}>
+                            {progress === "done" ? (
                               <Check size={13} />
+                            ) : progress === "locked" ? (
+                              <Lock size={12} />
                             ) : (
                               <i />
                             )}
-                            {!w.reviewAvailable
+                            {progress === "none"
                               ? t("No review scheduled", "리뷰 없음")
-                              : s?.status === "completed"
+                              : progress === "locked"
+                                ? t("Locked", "잠김")
+                              : progress === "done"
                                 ? t("Completed", "완료")
-                                : s
+                                : progress === "progress"
                                   ? t("In progress", "진행 중")
                                   : t("Ready to explore", "시작 가능")}
                           </span>
                         </div>
                         <button
-                          disabled={!w.reviewAvailable || (!isDemo && !user)}
+                          disabled={!open || (!isDemo && !user)}
                           className="row-action"
                           onClick={() => choose(w, s)}
                         >
                           {!w.reviewAvailable
                             ? "—"
-                            : s?.status === "completed"
-                              ? t("View reflection", "피드백 보기")
-                              : s
+                            : progress === "locked"
+                              ? <Lock size={15} aria-label={t("Locked", "잠김")} />
+                            : progress === "done"
+                              ? t("View transcript", "대화 기록 보기")
+                              : progress === "progress"
                                 ? t("Continue review", "리뷰 이어하기")
                                 : t("Start review", "리뷰 시작")}{" "}
-                          {w.reviewAvailable && <ArrowUpRight size={17} />}
+                          {open && <ArrowUpRight size={17} />}
                         </button>
                       </article>
                     );
@@ -564,7 +588,7 @@ function App() {
                   "주제는 기존 수업 일정표 기준입니다. 학습 목표와 질문은 수정 가능한 초안이며, 8·16주차는 리뷰가 없습니다.",
                 )}
               </p>
-            </>
+            </div>
           )}
           {page === "setup" && week && (
             <div className="narrow review-setup">
@@ -583,17 +607,11 @@ function App() {
                 <h1>{titleOf(week, l)}</h1>
               </div>
               <div className="setup-guidance">
-                <h2>
-                  {t(
-                    "Take your time. Talk it through.",
-                    "천천히 생각하고, 말로 풀어보세요.",
-                  )}
-                </h2>
                 <ul className="setup-list">
                   {[
                     ["Open book—feel free to use your notes and course materials.", "오픈북입니다. 노트와 수업 자료를 자유롭게 참고하세요."],
-                    isDemo ? ["Re-record your answer as many times as you like.", "답변은 원하는 만큼 다시 녹음할 수 있습니다."] : ["Talk naturally with your learning companion. Take time to think.", "학습 에이전트와 편하게 대화하세요. 잠시 생각해도 괜찮아요."],
-                    isDemo ? ["Listen back to your recording, then select “Finish answer” to continue.", "녹음한 답변을 다시 듣고, 준비되면 ‘답변 완료’를 선택하세요."] : ["Ask questions, explore an example, or pause whenever you need.", "궁금한 것을 묻고, 예시를 함께 생각하거나 필요할 때 잠시 멈추세요."],
+                    isDemo ? ["Re-record your answer as many times as you like.", "답변은 원하는 만큼 다시 녹음할 수 있습니다."] : ["Ask questions, explore an example, or pause whenever you need.", "궁금한 것을 묻고, 예시를 함께 생각하거나 필요할 때 잠시 멈추세요."],
+                    isDemo ? ["Listen back to your recording, then select “Finish answer” to continue.", "녹음한 답변을 다시 듣고, 준비되면 ‘답변 완료’를 선택하세요."] : ["Find a quiet spot and allow microphone access.", "조용한 곳에서 마이크 접근을 허용해 주세요."],
                   ].map(([en,ko]) => <li key={en}><CheckCircle2/>{t(en,ko)}</li>)}
                 </ul>
               </div>
@@ -603,17 +621,6 @@ function App() {
                 </div>
                 <div>
                   <h3>{t("Check your microphone", "마이크 확인")}</h3>
-                  <p>
-                    {mic === "ready"
-                      ? t(
-                          "Speak and watch the input level move.",
-                          "말하면서 아래 입력 레벨이 움직이는지 확인해 보세요.",
-                        )
-                      : t(
-                          "Find a quiet spot and allow microphone access.",
-                          "조용한 곳에서 마이크 접근을 허용해 주세요.",
-                        )}
-                  </p>
                   {micDevices.length > 0 && <label className="mic-device-select">
                     <span>{t("Input device", "입력 장치")}</span>
                     <select value={selectedMic} disabled={mic === "checking"} onChange={e=>{const id=e.target.value;setSelectedMic(id);testMic(id)}}>
@@ -654,15 +661,16 @@ function App() {
                 >
                   {busy
                     ? t("Connecting…", "연결 중…")
-                    : session
+                    : hasStarted(session)
                       ? t("Continue conversation", "대화 이어하기")
                       : isDemo ? t("Begin review", "리뷰 시작") : t("Start conversation", "대화 시작")}
                   <ArrowRight size={17} />
                 </button>
+                {!isDemo && mic !== "ready" && !busy && <span className="setup-hint">{t("Test your microphone to start.", "마이크를 테스트하면 시작할 수 있어요.")}</span>}
               </div>
             </div>
           )}
-          {page === "conversation" && session && <ConversationReview session={session} deviceId={selectedMic} onUpdate={refreshSession} onLeave={() => navigate("reviews")} onComplete={s => { update(s); setPage("feedback"); evaluateSession(s); }} />}
+          {page === "conversation" && session && <ConversationReview session={session} deviceId={selectedMic} onUpdate={refreshSession} onLeave={() => navigate("reviews")} onComplete={finishConversation} />}
           {page === "review" && session && (
             <div className="narrow review-conversation">
               <div className="review-top">
@@ -892,6 +900,16 @@ function App() {
                 <ChevronLeft size={16} />
                 {t("All weekly reviews", "전체 주차별 리뷰")}
               </button>
+              {session.mode === "conversation" ? (
+                <>
+                  <div className="eyebrow">
+                    {t("WEEK", "주차")} {String(session.weekId).padStart(2, "0")} · {t("TRANSCRIPT", "대화 기록")}
+                  </div>
+                  <h1>{titleOf(weeks.find((w) => w.id === session.weekId), l)}</h1>
+                  {session.completedAt && <p className="lead">{t("Completed", "완료")} {new Date(session.completedAt).toLocaleString("en-US")}</p>}
+                </>
+              ) : (
+                <>
               <div className="complete-icon">
                 <Check size={29} />
               </div>
@@ -977,13 +995,15 @@ function App() {
                   </button>
                 </div>
               )}
+                </>
+              )}
               <section className="transcript">
-                <div className="section-heading">
+                {session.mode !== "conversation" && <div className="section-heading">
                   <h2>{t("Your conversation", "나의 대화 기록")}</h2>
                   <span>
                     {session.mode === "conversation" ? t("Saved", "저장됨") : `${session.turns.length} ${t("answers", "개의 답변")}`}
                   </span>
-                </div>
+                </div>}
                 {session.mode === "conversation" ? session.messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === "student" ? t("You", "나") : t("Learning companion", "학습 에이전트")}</strong><p>{m.text}</p><time>{new Date(m.createdAt).toLocaleString(l === "ko" ? "ko-KR" : "en-US")}</time></div>) : session.questions.map((q, i) => (
                   <details key={q.id}>
                     <summary>
@@ -1014,12 +1034,6 @@ function App() {
                 ))}
               </section>
               <div className="setup-actions">
-                <span>
-                  {t(
-                    "Keep the conversation going next week.",
-                    "다음 주에도 배움을 이어가세요.",
-                  )}
-                </span>
                 <button className="primary" onClick={() => navigate("reviews")}>
                   {t("Back to weekly reviews", "주차별 리뷰로 돌아가기")}
                   <ArrowRight size={16} />

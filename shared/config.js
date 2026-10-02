@@ -4,6 +4,11 @@ export const reviewConfig = {
   maxFollowUps: 1,
   courseId: "id40018-2026",
 };
+// Weeks students can open; the rest show as locked until released.
+// Override with UNLOCKED_WEEKS (server) and VITE_UNLOCKED_WEEKS (browser): "1,2,3" or "all".
+const unlockedSetting = (typeof process !== "undefined" && process.env?.UNLOCKED_WEEKS) || import.meta.env?.VITE_UNLOCKED_WEEKS || "1";
+export const isWeekUnlocked = (weekId) =>
+  unlockedSetting.trim() === "all" || unlockedSetting.split(",").map(Number).includes(Number(weekId));
 export const rubric = {
   accuracy: { en: "Conceptual accuracy", ko: "개념 정확성" },
   reasoning: { en: "Explanation & reasoning", ko: "설명과 근거" },

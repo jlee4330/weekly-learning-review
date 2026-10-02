@@ -1,0 +1,20 @@
+{
+  "week": 4,
+  "opening": "What role does retrieval play when an AI service needs information beyond its model?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w04-q01",
+      "topic": "Knowledge-Augmented AI Systems - Part 1",
+      "phase": "understand",
+      "question": "What role does retrieval play when an AI service needs information beyond its model?",
+      "lookFor": [
+        "retrieval before generation",
+        "external sources",
+        "retrieval errors"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

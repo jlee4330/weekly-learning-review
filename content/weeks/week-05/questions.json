@@ -1,0 +1,20 @@
+{
+  "week": 5,
+  "opening": "How would you distinguish the roles of retrieval, memory, and tools in an AI service?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w05-q01",
+      "topic": "Knowledge-Augmented AI Systems - Part 2",
+      "phase": "understand",
+      "question": "How would you distinguish the roles of retrieval, memory, and tools in an AI service?",
+      "lookFor": [
+        "persistent context",
+        "external actions",
+        "permissions"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

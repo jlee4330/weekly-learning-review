@@ -1,3 +1,4 @@
+import { realtimeError, realtimeConnectionError } from "./realtime-errors.js";
 import { api } from "./api";
 import { AnswerRecorder } from "./answer-recorder.js";
 import { InputMonitor } from "./input-monitor.js";
@@ -30,7 +31,7 @@ export class RealtimeVoice {
     this.onSpeakingEnd = onSpeakingEnd;
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, ...(this.deviceId ? {deviceId: {exact: this.deviceId}} : {}) },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, ...(this.deviceId ? {deviceId: {exact: this.deviceId}} : {}) },
       });
       if (this.closed) { this.stream.getTracks().forEach(t => t.stop()); return; }
       this.stream.getTracks().forEach((t) => (t.enabled = false));
@@ -38,6 +39,7 @@ export class RealtimeVoice {
       this.pc = new RTCPeerConnection();
       this.audio = new Audio();
       this.audio.autoplay = true;
+      this.watchPlayback();
       this.pc.ontrack = (e) => {
         this.audio.srcObject = e.streams[0];
         this.audio.play().catch(() => onError(Error("AUDIO_PLAYBACK")));
@@ -69,7 +71,7 @@ export class RealtimeVoice {
         },
         body: offer.sdp,
       });
-      if (!r.ok) throw Error("CONNECTION_FAILED");
+      if (!r.ok) throw await realtimeConnectionError(r);
       await this.pc.setRemoteDescription({
         type: "answer",
         sdp: await r.text(),
@@ -99,7 +101,7 @@ export class RealtimeVoice {
           (event.type === "response.done" && event.response?.status === "failed")
         ) {
           clearTimeout(this.transcriptionTimeout);
-          this.onError(Error(event.error?.code || "VOICE_REQUEST_FAILED"));
+          this.onError(realtimeError(event));
         }
   }
   send(event) {
@@ -139,8 +141,30 @@ export class RealtimeVoice {
     this.stream.getTracks().forEach((t) => (t.enabled = false));
     this.send({ type: "input_audio_buffer.commit" });
   }
+  // Logs to the console when incoming agent audio loses packets or needs concealment,
+  // so crackling can be told apart from network problems. Checks every 5 seconds.
+  watchPlayback() {
+    let last = null;
+    this.statsTimer = setInterval(async () => {
+      const report = await this.pc?.getStats().catch(() => null);
+      report?.forEach((r) => {
+        if (r.type !== "inbound-rtp" || r.kind !== "audio") return;
+        if (last) {
+          const samples = r.totalSamplesReceived - last.totalSamplesReceived;
+          const concealed = r.concealedSamples - last.concealedSamples;
+          const lost = r.packetsLost - last.packetsLost;
+          if (samples > 0 && (lost > 0 || concealed / samples > 0.02))
+            console.warn(`[voice] agent audio degraded: ${lost} packets lost, ${(100 * concealed / samples).toFixed(1)}% concealed, jitter ${(r.jitter * 1000).toFixed(0)} ms`);
+        }
+        last = r;
+      });
+    }, 5000);
+  }
   close() {
+    clearInterval(this.statsTimer);
+    clearTimeout(this.replyTimer);
     this.closed = true;
+    clearTimeout(this.responseRetryTimer);
     this.inputMonitor.close();
     this.recorder.discard();
     this.awaitingTranscript = false;

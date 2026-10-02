@@ -1,0 +1,20 @@
+{
+  "week": 3,
+  "opening": "Why might designing an LLM interaction begin with the human outcome, rather than the answer you want the model to generate?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w03-q01",
+      "topic": "LLM & Prompt Engineering - Part 2",
+      "phase": "understand",
+      "question": "Why might designing an LLM interaction begin with the human outcome, rather than the answer you want the model to generate?",
+      "lookFor": [
+        "multiple input modalities",
+        "alignment",
+        "modality limitations"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

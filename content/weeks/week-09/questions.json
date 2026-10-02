@@ -1,0 +1,20 @@
+{
+  "week": 9,
+  "opening": "What purpose could an LLM wiki serve in a knowledge-augmented AI service?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w09-q01",
+      "topic": "Knowledge-Augmented AI - Part 3",
+      "phase": "understand",
+      "question": "What purpose could an LLM wiki serve in a knowledge-augmented AI service?",
+      "lookFor": [
+        "organized knowledge",
+        "provenance",
+        "updates"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

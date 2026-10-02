@@ -1,0 +1,20 @@
+{
+  "week": 12,
+  "opening": "How would you decide when an AI system should take the initiative and when it should wait for the user?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w12-q01",
+      "topic": "Agency and Initiatives",
+      "phase": "understand",
+      "question": "How would you decide when an AI system should take the initiative and when it should wait for the user?",
+      "lookFor": [
+        "initiative allocation",
+        "human verification",
+        "control"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

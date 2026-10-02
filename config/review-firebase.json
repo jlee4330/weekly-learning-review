@@ -1,0 +1,12 @@
+{
+  "purpose": "Weekly Learning Review transcript storage; authentication remains on the course project",
+  "firebase": {
+    "apiKey": "AIzaSyDKklMLAaUp-pXXNOLYyujZoHQYBkz3fQs",
+    "authDomain": "id40018-7e359.firebaseapp.com",
+    "projectId": "id40018-7e359",
+    "storageBucket": "id40018-7e359.firebasestorage.app",
+    "messagingSenderId": "265536187278",
+    "appId": "1:265536187278:web:c69fdcf7e5affdd2b712df",
+    "measurementId": "G-QS8WE2KBVB"
+  }
+}

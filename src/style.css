@@ -1614,24 +1614,147 @@ main {padding-top:26px;}
  .review-setup .mic-panel > button {grid-column:2;margin:0;justify-self:start;}
 }
 
-/* Continuous dialogue: one open canvas, with a persistent microphone signal. */
-.continuous-conversation { max-width: 1120px; margin: 24px auto 0; }
+/* Continuous dialogue: question card on top, a single voice orb that shows whose turn it is. */
+.continuous-conversation { max-width: 880px; margin: 24px auto 0; }
 .conversation-meta { display:flex; justify-content:space-between; gap:24px; color:#526b83; font-size:14px; }
 .conversation-meta > span:first-child { font-weight:650; letter-spacing:.08em; }
-.agent-utterance { padding:64px 0 48px; min-height:280px; }
-.agent-utterance .eyebrow { color:#55718a; margin-bottom:20px; }
-.agent-utterance h1 { color:#202c3a; font-size:clamp(25px, 2.5vw, 36px); line-height:1.5; letter-spacing:-.025em; font-weight:550; max-width:none; margin:0; text-wrap:pretty; }
-.conversation-input { padding:28px 0; text-align:center; }
-.continuous-wave { display:flex; align-items:center; justify-content:center; gap:4px; height:60px; }
-.continuous-wave i { width:4px; border-radius:4px; background:#628bb5; transition:height 80ms linear; }
-.conversation-input p { display:flex; align-items:center; justify-content:center; gap:8px; color:#33495f; font-size:14px; margin:16px 0 8px; }
-.conversation-input small { color:#58697a; font-size:14px; }
-.conversation-controls { display:flex; justify-content:center; gap:12px; padding:20px 0 40px; }
-.conversation-controls button { color:#33495f; }
+
+/* Fixed height so the orb and controls never move as the agent's turn grows;
+   longer turns scroll inside the card, pinned to the latest text. */
+.agent-card { margin:20px 0 0; padding:28px 32px; height:clamp(240px, 36vh, 360px); overflow-y:auto; scrollbar-width:thin; border-radius:24px; background:linear-gradient(160deg, #f6f9fc, #eef3f9); border:1px solid #e3eaf1; }
+.agent-card .eyebrow { color:#55718a; margin:0 0 14px; }
+.agent-card .agent-lead { color:#5b6d80; font-size:clamp(16px, 1.4vw, 19px); line-height:1.6; margin:0 0 14px; text-wrap:pretty; }
+.agent-card .agent-lead.clamped { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.agent-card h1.agent-question { color:#14202d; font-size:clamp(23px, 2.3vw, 32px); line-height:1.4; letter-spacing:-.02em; font-weight:650; margin:0; max-width:none; text-wrap:pretty; }
+.agent-card h1.agent-question.long { font-size:clamp(20px, 1.9vw, 26px); }
+
+.voice-stage { padding:36px 0 8px; text-align:center; }
+.voice-row { display:flex; align-items:center; justify-content:center; gap:clamp(28px, 6vw, 64px); }
+.voice-control { display:grid; justify-items:center; gap:8px; }
+.voice-control span { font-size:13px; color:#58697a; }
+.round-control { width:56px; height:56px; padding:0; border-radius:50%; display:grid; place-items:center; color:#33495f; background:#fff; border:1px solid #d9e2ea; box-shadow:0 2px 8px rgba(32,44,58,.06); }
+.round-control:hover:not(:disabled) { background:#f2f6fa; }
+.round-control.end { color:#fff; background:#c4573f; border-color:#c4573f; }
+.round-control.end:hover:not(:disabled) { background:#a94631; }
+.round-control:disabled { opacity:.45; }
+
+/* Live orb: three blurred colour blobs drift inside a glass sphere; palette and speed follow the turn state,
+   and the halo and sphere swell with the student's voice while listening. */
+.live-orb { --level:0; --a:#b9cde4; --b:#d9e4f2; --c:#9fb6d3; --glow:#9fb6d3; --speed:14s; position:relative; width:184px; height:184px; display:grid; place-items:center; }
+.live-orb > span { position:absolute; border-radius:50%; }
+.orb-halo { inset:6px; background:radial-gradient(circle, var(--glow) 0, transparent 68%); opacity:calc(.28 + var(--level) * .5); filter:blur(14px); transform:scale(calc(1 + var(--level) * .35)); transition:transform 120ms linear, opacity 120ms linear, background .6s; }
+.orb-ring { inset:30px; border:1.5px solid var(--glow); opacity:0; }
+.orb-sphere { inset:30px; overflow:hidden; background:var(--b); box-shadow:inset 0 -14px 28px -8px rgba(20,32,45,.22), inset 0 10px 22px -6px rgba(255,255,255,.7), 0 18px 36px -18px var(--glow); transform:scale(calc(1 + var(--level) * .14)); transition:transform 110ms linear, background .6s, box-shadow .6s; isolation:isolate; }
+.orb-sphere i { position:absolute; width:78%; height:78%; border-radius:50%; filter:blur(16px); opacity:.95; mix-blend-mode:normal; transition:background .6s; }
+.orb-sphere i:nth-child(1) { left:-14%; top:-10%; background:var(--a); animation:orb-drift-a var(--speed) ease-in-out infinite; }
+.orb-sphere i:nth-child(2) { right:-18%; top:18%; background:var(--c); animation:orb-drift-b calc(var(--speed) * 1.3) ease-in-out infinite; }
+.orb-sphere i:nth-child(3) { left:8%; bottom:-24%; background:var(--glow); opacity:.75; animation:orb-drift-c calc(var(--speed) * .8) ease-in-out infinite; }
+/* Glass highlight on top of the colour field. */
+.orb-sphere::after { content:""; position:absolute; inset:0; border-radius:50%; z-index:1; background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.85) 0, rgba(255,255,255,.25) 18%, transparent 42%), radial-gradient(circle at 70% 88%, rgba(255,255,255,.18), transparent 40%); }
+@keyframes orb-drift-a { 0%,100% { transform:translate(0,0) scale(1); } 33% { transform:translate(22%,14%) scale(1.12); } 66% { transform:translate(6%,30%) scale(.92); } }
+@keyframes orb-drift-b { 0%,100% { transform:translate(0,0) scale(1); } 40% { transform:translate(-30%,-12%) scale(.9); } 75% { transform:translate(-12%,22%) scale(1.15); } }
+@keyframes orb-drift-c { 0%,100% { transform:translate(0,0) scale(1); } 50% { transform:translate(18%,-34%) scale(1.1); } }
+@keyframes orb-breathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
+@keyframes orb-ripple { from { opacity:.55; transform:scale(1); } to { opacity:0; transform:scale(1.5); } }
+
+.live-orb.is-connecting { --a:#c9d8ea; --b:#e6eef7; --c:#aebfd6; --glow:#b4c6dd; --speed:10s; }
+.live-orb.is-connecting .orb-sphere { animation:orb-breathe 2.2s ease-in-out infinite; }
+.live-orb.is-listening { --a:#5fe0b0; --b:#c9f5e4; --c:#2fb7c4; --glow:#3cc795; --speed:7s; }
+.live-orb.is-listening .orb-ring { opacity:calc(.1 + var(--level) * .7); transform:scale(calc(1.06 + var(--level) * .4)); transition:transform 110ms linear, opacity 110ms linear; }
+.live-orb.is-speaking { --a:#6aa6ff; --b:#d6e6ff; --c:#7b6cff; --glow:#5b8dff; --speed:4.5s; }
+.live-orb.is-speaking .orb-sphere { animation:orb-breathe 1.5s ease-in-out infinite; }
+.live-orb.is-speaking .orb-ring { animation:orb-ripple 2s ease-out infinite; }
+.live-orb.is-speaking .orb-ring + .orb-ring { animation-delay:1s; }
+.live-orb.is-thinking { --a:#a98bff; --b:#e6defe; --c:#6fb2ff; --glow:#8f78ff; --speed:2.6s; }
+.live-orb.is-paused { --a:#d3dbe4; --b:#eef2f6; --c:#c1ccd8; --glow:#c8d2dd; --speed:30s; }
+.live-orb.is-paused .orb-sphere i { animation-play-state:paused; }
+.live-orb.is-error, .live-orb.is-warning { --a:#ff9a7a; --b:#ffe3d9; --c:#ee5d5d; --glow:#f07a5f; --speed:9s; }
+@media (prefers-reduced-motion: reduce) { .live-orb *, .live-orb *::after { animation:none !important; transition:none !important; } }
+
+.voice-status { margin:20px 0 4px; font-size:18px; font-weight:600; color:#202c3a; }
+.voice-status.is-listening { color:#24795a; }
+.voice-status.is-speaking { color:#2f5f93; }
+.voice-status.is-thinking { color:#55489a; }
+.voice-status.is-error, .voice-status.is-warning { color:#a14b3c; }
+.voice-stage small { display:block; min-height:1.6em; color:#6a7b8c; font-size:14px; }
+.conversation-aux { display:flex; justify-content:center; padding:12px 0 28px; }
+.conversation-reset { border:0; background:none; padding:6px 8px; color:#a14b3c; font-size:13px; display:inline-flex; align-items:center; gap:6px; opacity:.8; }
+.conversation-reset:hover:not(:disabled) { text-decoration:underline; background:none; opacity:1; }
 .conversation-history { border-top:1px solid #e1e7ec; padding:24px 0; }
 .conversation-history summary { cursor:pointer; color:#43566a; }
 .conversation-history summary small { float:right; color:#627568; }
 .conversation-playback { max-width:520px; margin:0 auto 36px; display:grid; gap:12px; }
 .conversation-playback audio { width:100%; }
 .conversation-playback small { color:#58697a; }
-@media(max-width:600px) { .conversation-meta { font-size:12px; flex-wrap:wrap; gap:10px; } .agent-utterance { padding:40px 0 24px; min-height:240px; } .continuous-wave { gap:3px; } .continuous-wave i { width:3px; } .conversation-controls { gap:8px; } }
+@media(max-width:600px) { .conversation-meta { font-size:12px; } .agent-card { padding:20px; border-radius:18px; height:clamp(240px, 38vh, 340px); } .voice-stage { padding-top:24px; } .live-orb { width:156px; height:156px; } .orb-sphere, .orb-ring { inset:26px; } .round-control { width:52px; height:52px; } }
+
+/* Weekly review list: larger type and distinct status pills. */
+.reviews-page .eyebrow { font-size:12px; letter-spacing:.12em; }
+.reviews-page .lead { font-size:17px; color:#5f6f80; }
+.reviews-page .review-summary strong { font-size:16px; }
+.reviews-page .review-summary p { font-size:14px; color:#64778a; }
+.reviews-page .summary-progress span { font-size:13px; color:#526b83; font-weight:600; }
+.reviews-page .tabs button { font-size:15px; }
+.reviews-page .week-number { font-size:26px; }
+.reviews-page .week-number small { font-size:10px; }
+.reviews-page .week-info h3 { font-size:17px; }
+.reviews-page .week-info p { font-size:14px; color:#64778a; }
+.reviews-page .row-action { font-size:14px; }
+.reviews-page .source-note { font-size:12px; }
+.reviews-page .status { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:3px 10px 3px 9px; border-radius:999px; font-size:12.5px; font-weight:600; line-height:1.5; color:#4b5d70; background:#eef2f6; }
+.reviews-page .status i { width:7px; height:7px; border-radius:50%; background:currentColor; }
+.reviews-page .status.done { color:#1d7148; background:#e2f3e9; }
+.reviews-page .status.progress { color:#94590a; background:#fdf0d8; }
+.reviews-page .status.progress i { background:#e09a1e; }
+.reviews-page .status.ready { color:#4b5d70; background:#edf1f5; }
+.reviews-page .status.none { color:#a0abb6; background:none; padding-left:0; }
+@media(max-width:600px) { .reviews-page .lead { font-size:15px; } .reviews-page .week-info h3 { font-size:16px; } .reviews-page .week-info p { font-size:13.5px; } .reviews-page .week-number { font-size:22px; } }
+
+/* Setup: primary action follows the content column, with the reason it is disabled beside it. */
+.review-setup .setup-actions { justify-content:flex-start; align-items:center; gap:16px; flex-wrap:wrap; }
+.review-setup .setup-hint { color:#64778a; font-size:13px; }
+.review-setup .setup-week-link { font-size:12px; }
+.review-setup h1 { font-size:clamp(28px, 3vw, 36px); }
+.review-setup h2 { font-size:22px; }
+.review-setup .setup-list li { font-size:16px; }
+.review-setup .mic-panel h3 { font-size:17px; }
+.review-setup .mic-panel p { font-size:14.5px; }
+.review-setup .mic-device-select span { font-size:14px; }
+.review-setup .mic-device-select select { font-size:15px; }
+.review-setup .mic-level-caption { font-size:12.5px; }
+.review-setup .mic-diagnostics, .review-setup .mic-diagnostics p { font-size:13.5px; }
+.review-setup .mic-panel > button { font-size:14px; }
+.review-setup .setup-actions .primary { font-size:15px; }
+.review-setup .setup-hint { font-size:14px; }
+footer { font-size:12px; }
+@media(max-width:600px) { .review-setup .setup-list li { font-size:15px; } .review-setup h2 { font-size:20px; } }
+.reviews-page .status.locked { color:#7b8794; background:#f1f3f5; }
+.reviews-page .status svg { flex:none; }
+.conversation-meta { align-items:center; }
+.conversation-meta .restart-control { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:13px; color:#a14b3c; border:1px solid #e8c3b9; background:#fff; }
+.conversation-meta .restart-control:hover:not(:disabled) { background:#fbeeea; }
+.conversation-meta .setup-week-link { font-size:12px; letter-spacing:.08em; }
+.login-dialog { width:min(440px,calc(100vw - 40px)); border:1px solid #e1e7ed; border-radius:18px; padding:36px; color:#243345; background:white; }
+.login-dialog::backdrop { background:rgba(25,40,55,.3); backdrop-filter:blur(3px); }
+.login-dialog h2 { margin:8px 0 12px; }
+.login-dialog p { color:#536579; line-height:1.6; }
+.login-dialog form { display:grid; gap:10px; margin:26px 0; }
+.login-dialog label { font-size:13px; font-weight:600; }
+.login-dialog input { min-width:0; width:100%; padding:12px; border:1px solid #cbd5df; border-radius:8px; background:white; color:#243345; margin-bottom:8px; }
+.login-dialog .primary { justify-content:center; margin-top:8px; }
+.login-dialog .login-close { position:absolute; right:16px; top:16px; border:0; padding:6px; }
+.login-dialog .login-help { font-size:12px; margin-bottom:0; }
+.login-dialog .login-error { color:#a43b3b; font-size:13px; margin:0; }
+.done-banner { display:flex; align-items:center; gap:12px; margin:0 0 24px; padding:14px 16px 14px 18px; border-radius:14px; background:#e2f3e9; color:#1d7148; font-size:16px; font-weight:600; animation:done-in .3s ease-out; }
+.done-banner span { flex:1; }
+.done-banner .icon-button { color:#1d7148; }
+@keyframes done-in { from { opacity:0; transform:translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .done-banner { animation:none; } }
+/* Transcript page: readable conversation text. */
+.transcript .transcript-turn strong { font-size:13px; }
+.transcript .transcript-turn p { font-size:16px; line-height:1.65; color:#202c3a; }
+.transcript .transcript-turn time { font-size:12px; }
+/* What the agent said after the question (e.g. "Take your time…"): shown under it, not highlighted. */
+.agent-card .agent-tail { color:#5b6d80; font-size:clamp(16px, 1.4vw, 19px); line-height:1.6; margin:14px 0 0; text-wrap:pretty; }
+.reset-all { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:13px; color:#a14b3c; background:#fff; border:1px solid #e8c3b9; }
+.reset-all:hover:not(:disabled) { background:#fbeeea; }

@@ -1,0 +1,20 @@
+{
+  "week": 11,
+  "opening": "How might qualitative and quantitative evaluation tell you different things about an AI service?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w11-q01",
+      "topic": "Evaluating AI Systems - Part 2",
+      "phase": "understand",
+      "question": "How might qualitative and quantitative evaluation tell you different things about an AI service?",
+      "lookFor": [
+        "task metrics",
+        "user evidence",
+        "complementary methods"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

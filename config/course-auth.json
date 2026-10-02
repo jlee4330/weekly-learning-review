@@ -1,0 +1,14 @@
+{
+  "source": "../dasd2026/src/firebase.js",
+  "provider": "password",
+  "studentEmailDomain": "kaist.ac.kr",
+  "firebase": {
+    "apiKey": "AIzaSyBRQW3_jqgutiugrYy15b75A9Mm1ykhydU",
+    "authDomain": "id400018-ddasd.firebaseapp.com",
+    "projectId": "id400018-ddasd",
+    "storageBucket": "id400018-ddasd.firebasestorage.app",
+    "messagingSenderId": "27838085328",
+    "appId": "1:27838085328:web:9cefe7e15d863d5ebcc6d5",
+    "measurementId": "G-T69B7W57EB"
+  }
+}

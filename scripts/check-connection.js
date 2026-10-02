@@ -40,7 +40,7 @@ try {
   }
   console.log('키 값은 출력하지 않았습니다. 마이크 입력·음성 재생은 브라우저에서 별도로 확인해야 합니다.');
 } catch (error) {
-  const code = /^(REALTIME|MODEL)_\d{3}$|^FIREBASE_PROJECT_MISMATCH$/.test(error.message) ? error.message : 'CONNECTION_CHECK_FAILED';
+  const code = /^(REALTIME|MODEL)_\d{3}$|^FIREBASE_PROJECT_MISMATCH$|^VOICE_(AUTH_FAILED|CONNECTION_SERVICE)$|^(insufficient_quota|rate_limit_exceeded)$/.test(error.message) ? error.message : 'CONNECTION_CHECK_FAILED';
   console.error(`연결 확인 실패 (${code}). 키 권한·모델·Firebase 설정을 확인하세요. 기존 모드는 유지합니다.`);
   process.exitCode = 1;
 } finally {

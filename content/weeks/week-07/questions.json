@@ -1,0 +1,20 @@
+{
+  "week": 7,
+  "opening": "What does orchestration do in an AI service with multiple agents?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w07-q01",
+      "topic": "Agentic AI Systems - Part 2",
+      "phase": "understand",
+      "question": "What does orchestration do in an AI service with multiple agents?",
+      "lookFor": [
+        "routing",
+        "task dependencies",
+        "failure handling"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

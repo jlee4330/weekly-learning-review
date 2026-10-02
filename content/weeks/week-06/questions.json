@@ -1,0 +1,20 @@
+{
+  "week": 6,
+  "opening": "When might a service need multiple agents rather than a single agent?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w06-q01",
+      "topic": "Agentic AI Systems - Part 1",
+      "phase": "understand",
+      "question": "When might a service need multiple agents rather than a single agent?",
+      "lookFor": [
+        "division of work",
+        "coordination cost",
+        "single-agent baseline"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

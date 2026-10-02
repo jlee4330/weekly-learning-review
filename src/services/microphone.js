@@ -44,7 +44,7 @@ export async function checkMicrophone(onLevel,{signal,deviceId='',onDevice=()=>{
   signal?.addEventListener('abort',stop,{once:true});
   try{
     if(signal?.aborted)throw Error('ABORTED');
-    const permission=navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,...(deviceId?{deviceId:{exact:deviceId}}:{})}});
+    const permission=navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,...(deviceId?{deviceId:{exact:deviceId}}:{})}});
     // Permission prompts cannot be cancelled. Release a late grant after leaving.
     permission.then(value=>{if(stopped)value.getTracks().forEach(t=>t.stop())},()=>{});
     stream=await bounded(permission,20000,'MIC_PERMISSION_TIMEOUT');

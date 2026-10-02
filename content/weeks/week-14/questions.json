@@ -1,0 +1,20 @@
+{
+  "week": 14,
+  "opening": "How could an AI interface help users understand uncertainty in its outputs?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w14-q01",
+      "topic": "AI-native Interfaces",
+      "phase": "understand",
+      "question": "How could an AI interface help users understand uncertainty in its outputs?",
+      "lookFor": [
+        "dynamic interfaces",
+        "predictability",
+        "user control"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

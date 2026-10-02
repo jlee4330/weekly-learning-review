@@ -6,3 +6,8 @@ dist/
 test-results/
 playwright-report/
 .data/
+
+# Service-account keys (never commit)
+secrets/
+
+.DS_Store

@@ -1,4 +1,4 @@
-import context from "./course-context.json" with { type: "json" };
+import { weekContent } from "./course-content.js";
 import { openingFor } from "../shared/course-dialogue.js";
 import { weeks } from "../shared/questions.js";
 import { conversationConfig, conversationInstructions } from "../shared/conversation-config.js";
@@ -8,12 +8,14 @@ export function realtimeSession(language = "en", session) {
   return {
     type: "realtime",
     model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1",
-    instructions: conversational ? conversationInstructions(session, weeks.find(w => w.id === session.weekId), session.courseContext || context.weeks[session.weekId]) : `Read review questions exactly in ${language === "ko" ? "Korean" : "English"}. Do not answer, explain, evaluate, or ask independent questions.`,
+    instructions: conversational ? conversationInstructions(session, weeks.find(w => w.id === session.weekId), session.courseContext?.summary ? session.courseContext : weekContent(session.weekId)) : `Read review questions exactly in ${language === "ko" ? "Korean" : "English"}. Do not answer, explain, evaluate, or ask independent questions.`,
     audio: {
       input: {
         turn_detection: conversational ? conversationConfig.turnDetection : null,
         transcription: { model: "gpt-4o-mini-transcribe", language },
+        noise_reduction: conversationConfig.noiseReduction,
       },
+      // Keep the default speed: changing it time-stretches the generated audio and can make it crackle.
       output: { voice: "marin" },
     },
   };
@@ -29,7 +31,14 @@ export async function createRealtimeToken(language, session) {
     body: JSON.stringify({ session: realtimeSession(language, session) }),
     signal: AbortSignal.timeout(20000),
   });
-  if (!response.ok) throw Error(`REALTIME_${response.status}`);
+  if (!response.ok) {
+    // Return a useful code without exposing provider response bodies or credentials.
+    const failure = await response.json().catch(() => ({}));
+    const code = response.status === 401 ? 'VOICE_AUTH_FAILED'
+      : failure.error?.code === 'insufficient_quota' ? 'insufficient_quota'
+      : response.status === 429 ? 'rate_limit_exceeded' : 'VOICE_CONNECTION_SERVICE';
+    throw Object.assign(Error(code), { status: response.status === 429 ? 429 : 502 });
+  }
   const token = await response.json();
   if (!token.value) throw Error("REALTIME_TOKEN_MISSING");
   return { value: token.value, ...(session?.mode === "conversation" ? { opening: openingFor(weeks.find(w => w.id === session.weekId)) } : {}) };

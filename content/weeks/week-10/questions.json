@@ -1,0 +1,20 @@
+{
+  "week": 10,
+  "opening": "What would you want to evaluate to know whether an AI service is useful to its users?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w10-q01",
+      "topic": "Evaluating AI Systems - Part 1",
+      "phase": "understand",
+      "question": "What would you want to evaluate to know whether an AI service is useful to its users?",
+      "lookFor": [
+        "explicit criteria",
+        "fallible judge",
+        "human calibration"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}

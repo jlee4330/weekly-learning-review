@@ -1,0 +1,20 @@
+{
+  "week": 13,
+  "opening": "What is one risk that a guardrail should address in an AI service?",
+  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "questions": [
+    {
+      "id": "w13-q01",
+      "topic": "Responsibility and Safety",
+      "phase": "understand",
+      "question": "What is one risk that a guardrail should address in an AI service?",
+      "lookFor": [
+        "risk reduction",
+        "residual risk",
+        "testing"
+      ],
+      "followUps": [],
+      "misconceptions": []
+    }
+  ]
+}
