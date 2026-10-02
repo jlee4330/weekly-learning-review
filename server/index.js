@@ -1,6 +1,6 @@
 import { verifyCourseLogin } from "./firebase-admin.js";
 import { weekContent } from "./course-content.js";
-import { createTranscriptStore } from "./transcript-store.js";
+import { createTranscriptStore, studentIdOf } from "./transcript-store.js";
 import { evaluation, validateEvidence } from "./evaluation.js";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -43,6 +43,8 @@ try {
   console.error("SERVER_SETUP_FAILED", error.message);
 }
 const patch = (id, fields) => store.mutate(id, s => ({ ...s, ...fields }));
+// Student key used in session IDs and Firestore paths: the login email before "@" (falls back to the uid).
+const studentKey = (user) => studentIdOf(user, user.uid);
 // Best-effort copy of a finished conversation to the per-student transcript database.
 // Written when the student presses End; removed when that week is restarted or reset.
 function mirror(session, user) {
@@ -141,7 +143,7 @@ app.get(
   "/api/sessions",
   handler(async (req, res) => {
     await enrolled(req);
-    const sessions = await store.list(req.user.uid);
+    const sessions = await store.list(req.user.uid, studentKey(req.user));
     res.json(
       sessions
         .map(publicSession)
@@ -160,7 +162,7 @@ app.post(
       })
       .parse(req.body);
     if (!isWeekUnlocked(weekId)) throw Object.assign(Error("WEEK_LOCKED"), { status: 403 });
-    const s = prepareConversation(createSession(weekId, "en", req.user.uid, randomUUID()));
+    const s = prepareConversation(createSession(weekId, "en", req.user.uid, `${studentKey(req.user)}~${randomUUID()}`));
     await store.create(s);
     res.json(s);
   }),
@@ -196,9 +198,9 @@ app.post("/api/sessions/:id/reset", handler(async (req, res) => {
 // Resets every conversation of the signed-in student (local development storage only), including the transcript mirror.
 app.post("/api/dev/reset-all", handler(async (req, res) => {
   if (!local) throw Object.assign(Error("FORBIDDEN"), { status: 403 });
-  for (const s of await store.list(req.user.uid))
+  for (const s of await store.list(req.user.uid, studentKey(req.user)))
     if (s.mode === "conversation") unmirror(await store.mutate(s.id, resetConversation), req.user);
-  const sessions = await store.list(req.user.uid);
+  const sessions = await store.list(req.user.uid, studentKey(req.user));
   res.json(sessions.map(publicSession).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
 }));
 app.post("/api/sessions/:id/complete", handler(async (req, res) => {

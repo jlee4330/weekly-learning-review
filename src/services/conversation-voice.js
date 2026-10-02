@@ -119,8 +119,9 @@ export class RealtimeConversation extends RealtimeVoice {
     this.onState('listening');
     if (this.interruptedByPause || this.replyOnResume) { this.interruptedByPause = false; this.replyOnResume = false; this.deferred = null; this.send({ type: 'response.create' }); }
   }
-  async pause() {
-    if (this.paused) return;
+  // keepRecording: false is used when ending, so no playback clip is built for a conversation that is finishing.
+  async pause({ keepRecording = true } = {}) {
+    if (this.paused) { if (!keepRecording) this.recorder.discard(); return; }
     this.paused = true;
     clearTimeout(this.replyTimer);
     this.interruptedByPause = this.responding || this.playing;
@@ -131,6 +132,7 @@ export class RealtimeConversation extends RealtimeVoice {
     if (this.playing) this.send({ type: 'output_audio_buffer.clear' });
     if (this.userSpeaking) { this.send({ type: 'input_audio_buffer.commit' }); this.userSpeaking = false; }
     this.onState('paused');
+    if (!keepRecording) { this.recorder.discard(); return; }
     const speech = this.speech.map(s => ({ ...s, end: s.end ?? this.clock() }));
     try {
       const blob = await this.recorder.stop();
@@ -142,7 +144,7 @@ export class RealtimeConversation extends RealtimeVoice {
   }
   clock() { return (performance.now() - this.recordingStart) / 1000; }
   async drain() {
-    await this.pause();
+    await this.pause({ keepRecording: false });
     const deadline = Date.now() + 20000;
     while (this.pending.size && !this.closed && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 100));
     if (this.pending.size) throw Error('TRANSCRIPTION_TIMEOUT');

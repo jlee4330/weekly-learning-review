@@ -93,7 +93,7 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
         {state === 'error'
           ? <button className="conversation-action" onClick={connect}><RefreshCw size={17}/>Reconnect</button>
           : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
-        <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { await voice.current.drain(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>
+        <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { setRecording(''); await voice.current.drain(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>
       </div>
       {state === 'paused' && recording && <div className="console-playback"><RecordingAudio src={recording}/></div>}
     </section>

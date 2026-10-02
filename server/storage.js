@@ -51,34 +51,45 @@ export function createLocalStore(filename) {
   };
 }
 
+// Session IDs carry the student's key ("<studentId>~<uuid>"), so every session lives under that student:
+//   students/{studentId}/reviewSessions/{sessionId}   (+ private/evaluation, revisions)
+// next to the student's weekly transcripts on students/{studentId}. The top level only has `students`.
+export const sessionKey = (id) => (String(id).includes("~") ? String(id).split("~")[0] : null);
+
 export async function createCloudStore(courseId) {
   const { dataApp } = await import("./firebase-admin.js");
   const { getFirestore } = await import("firebase-admin/firestore");
   const app = dataApp();
   if (!app) throw Error("Set FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT (or a credentials file) for cloud storage.");
   const db = getFirestore(app);
-  const sessions = db.collection("courses").doc(courseId).collection("sessions");
+  const student = (key) => db.collection("students").doc(key);
+  const ref = (id) => {
+    const key = sessionKey(id);
+    if (!key) throw Object.assign(Error("NOT_FOUND"), { status: 404 });
+    return student(key).collection("reviewSessions").doc(id);
+  };
   return {
+    // Only consulted when REQUIRE_ENROLLMENT=true.
     enrolled: async uid => (await db.doc(`courses/${courseId}/members/${uid}`).get()).exists,
-    get: async id => (await sessions.doc(id).get()).data(),
-    list: async uid => {
-      const result = await (uid ? sessions.where("studentId", "==", uid) : sessions).get();
+    get: async id => (sessionKey(id) ? (await ref(id).get()).data() : undefined),
+    list: async (uid, key) => {
+      const result = await (key ? student(key).collection("reviewSessions").where("studentId", "==", uid) : db.collectionGroup("reviewSessions")).get();
       return result.docs.map(doc => doc.data());
     },
-    create: s => sessions.doc(s.id).create(s),
+    create: s => ref(s.id).create(s),
     mutate: (id, fn) => db.runTransaction(async tx => {
-      const ref = sessions.doc(id);
-      const next = await fn((await tx.get(ref)).data());
-      tx.set(ref, next);
+      const doc = ref(id);
+      const next = await fn((await tx.get(doc)).data());
+      tx.set(doc, next);
       return next;
     }),
-    saveEvaluation: (id, result) => sessions.doc(id).collection("private").doc("evaluation").set(result),
-    getEvaluation: async id => (await sessions.doc(id).collection("private").doc("evaluation").get()).data() || {},
+    saveEvaluation: (id, result) => ref(id).collection("private").doc("evaluation").set(result),
+    getEvaluation: async id => (await ref(id).collection("private").doc("evaluation").get()).data() || {},
     saveReview: (id, audit) => {
-      const ref = sessions.doc(id), batch = db.batch();
-      batch.set(ref.collection("revisions").doc(), audit);
-      batch.set(ref.collection("private").doc("evaluation"), { latestReview: audit, status: "reviewed" }, { merge: true });
-      batch.update(ref, { feedback: audit.revision.feedback, evaluationStatus: "reviewed" });
+      const doc = ref(id), batch = db.batch();
+      batch.set(doc.collection("revisions").doc(), audit);
+      batch.set(doc.collection("private").doc("evaluation"), { latestReview: audit, status: "reviewed" }, { merge: true });
+      batch.update(doc, { feedback: audit.revision.feedback, evaluationStatus: "reviewed" });
       return batch.commit();
     },
   };

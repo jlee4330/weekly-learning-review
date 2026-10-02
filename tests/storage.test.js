@@ -36,3 +36,9 @@ test("local API rejects remote hosts, cross-origin calls and missing client head
   ]) assert.equal(allowLocalRequest({ ...req, headers }), false);
   assert.equal(allowLocalRequest({ ...req, socket: { remoteAddress: "10.0.0.2" } }), false);
 });
+
+import { sessionKey } from "../server/storage.js";
+test("session IDs carry the student key used for students/{key}/reviewSessions", () => {
+  assert.equal(sessionKey("20261234~3f1c-uuid"), "20261234");
+  assert.equal(sessionKey("plain-uuid"), null);
+});
