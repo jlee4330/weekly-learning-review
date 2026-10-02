@@ -5,13 +5,12 @@ import { evaluation, validateEvidence } from "./evaluation.js";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "node:url";
-import { createLocalStore, createCloudStore } from "./storage.js";
+import { createLocalStore, createCloudStore, sessionIdFor } from "./storage.js";
 import { allowLocalRequest } from "./local-access.js";
 import { createRealtimeToken } from "./realtime.js";
 import { asConversation, mergeMessages, completeConversation } from "../shared/conversation.js";
 import { conversationJudgeInstructions } from "../shared/conversation-config.js";
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
 import {
   createSession,
   appendAnswer,
@@ -166,7 +165,7 @@ app.post(
       })
       .parse(req.body);
     if (!isWeekUnlocked(weekId)) throw Object.assign(Error("WEEK_LOCKED"), { status: 403 });
-    const s = prepareConversation(createSession(weekId, "en", req.user.uid, `${studentKey(req.user)}~${randomUUID()}`));
+    const s = prepareConversation(createSession(weekId, "en", req.user.uid, sessionIdFor(studentKey(req.user), weekId)));
     await store.create(s);
     res.json(s);
   }),
@@ -184,7 +183,8 @@ const messageSchema = z.object({
 app.post("/api/sessions/:id/messages", handler(async (req, res) => {
   const s = await getSession(req);
   const { messages } = z.object({ messages: z.array(messageSchema).max(30) }).parse(req.body);
-  await store.mutate(s.id, current => mergeMessages(current, messages));
+  // Cloud storage keeps only the final transcript, sent on End; autosaves are accepted but not written.
+  if (store.persistsMessages !== false) await store.mutate(s.id, current => mergeMessages(current, messages));
   res.json({ ok: true });
 }));
 // TEMP: development reset — clears the transcript and any feedback so the week can be retried.
@@ -209,7 +209,13 @@ app.post("/api/dev/reset-all", handler(async (req, res) => {
 }));
 app.post("/api/sessions/:id/complete", handler(async (req, res) => {
   const s = await getSession(req);
-  try { const done = await store.mutate(s.id, completeConversation); mirror(done, req.user); res.json(publicSession(done)); }
+  // The page sends the whole conversation on End; it becomes the week's transcript.
+  const { messages = [] } = z.object({ messages: z.array(messageSchema).max(500).optional() }).parse(req.body || {});
+  try {
+    const done = await store.mutate(s.id, current => completeConversation(messages.length && current.status === "in_progress" ? mergeMessages(current, messages) : current));
+    mirror(done, req.user);
+    res.json(publicSession(done));
+  }
   catch (error) { if (error.message === "NO_STUDENT_SPEECH") error.status = 400; throw error; }
 }));
 app.post(

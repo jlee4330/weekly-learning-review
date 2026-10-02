@@ -37,18 +37,24 @@ test("local API rejects remote hosts, cross-origin calls and missing client head
   assert.equal(allowLocalRequest({ ...req, socket: { remoteAddress: "10.0.0.2" } }), false);
 });
 
-import { sessionKey } from "../server/storage.js";
-test("session IDs carry the student key used for students/{key}/reviewSessions", () => {
-  assert.equal(sessionKey("20261234~3f1c-uuid"), "20261234");
+import { sessionKey, sessionWeek, sessionIdFor } from "../server/storage.js";
+test("a session ID locates students/{studentId}/weeks/Week{N}", () => {
+  assert.equal(sessionIdFor("20261234", 1), "20261234~Week1");
+  assert.equal(sessionKey("20261234~Week1"), "20261234");
+  assert.equal(sessionWeek("20261234~Week12"), "Week12");
   assert.equal(sessionKey("plain-uuid"), null);
+  assert.equal(sessionWeek("20261234~3f1c-uuid"), null);
 });
 
 import { packSession, unpackSession } from "../server/storage.js";
-test("Firestore stores only owner, week, status, times and messages; fixed values return on read", () => {
-  const session = { id: "k~1", studentId: "uid", weekId: 1, status: "completed", messages: [{ id: "m", text: "hi" }], createdAt: "c", updatedAt: "u", completedAt: "d",
+test("Firestore stores only owner, week, status and times; a saved transcript is read back as messages", () => {
+  const session = { id: "k~Week1", studentId: "uid", weekId: 1, status: "completed", messages: [{ id: "m", text: "hi" }], createdAt: "c", updatedAt: "u", completedAt: "d",
     mode: "conversation", language: "en", courseId: "id40018-2026", conversationVersion: "conversation-2", courseContextVersion: "v", rubricVersion: "r", evaluationStatus: "pending" };
   const stored = packSession(session);
-  assert.deepEqual(Object.keys(stored).sort(), ["completedAt", "createdAt", "messages", "status", "studentId", "updatedAt", "weekId"]);
-  const read = unpackSession("k~1", stored, "id40018-2026");
-  assert.equal(read.id, "k~1"); assert.equal(read.mode, "conversation"); assert.equal(read.status, "completed"); assert.deepEqual(read.messages, session.messages);
+  assert.deepEqual(Object.keys(stored).sort(), ["completedAt", "createdAt", "status", "studentId", "updatedAt", "weekId"]);
+  assert.equal(packSession({ ...session, completedAt: undefined }).completedAt, null);
+  const read = unpackSession("k~Week1", { ...stored, transcript: [{ role: "assistant", text: "Q?", at: "t0" }, { role: "student", text: "A.", at: "t1" }] }, "id40018-2026");
+  assert.equal(read.id, "k~Week1"); assert.equal(read.mode, "conversation"); assert.equal(read.status, "completed"); assert.equal("transcript" in read, false);
+  assert.deepEqual(read.messages.map((m) => [m.role, m.text, m.createdAt, m.order]), [["assistant", "Q?", "t0", 0], ["student", "A.", "t1", 1]]);
+  assert.deepEqual(unpackSession("k~Week2", { status: "in_progress" }, "c").messages, []);
 });
