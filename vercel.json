@@ -3,8 +3,16 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ],
   "functions": {
-    "api/index.js": { "includeFiles": "content/weeks/**", "maxDuration": 300 }
+    "api/index.js": {
+      "includeFiles": "{server,shared,config,content}/**",
+      "maxDuration": 300
+    }
   }
 }
