@@ -10,7 +10,15 @@ import courseAuth from "../config/course-auth.json" with { type: "json" };
 
 // Service account: FIREBASE_SERVICE_ACCOUNT holds the JSON itself (Vercel); locally a file path works too.
 export function serviceAccount() {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // Tolerate the value being pasted with surrounding quotes, and keys whose newlines arrive as "\\n".
+    let raw = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+    if (/^(['"]).*\1$/s.test(raw)) raw = raw.slice(1, -1);
+    let account;
+    try { account = JSON.parse(raw); } catch { throw Error("FIREBASE_SERVICE_ACCOUNT is not valid JSON."); }
+    if (account.private_key) account.private_key = account.private_key.replace(/\\n/g, "\n");
+    return account;
+  }
   const file = process.env.TRANSCRIPT_FIREBASE_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS;
   return file ? JSON.parse(readFileSync(file, "utf8")) : null;
 }

@@ -31,11 +31,18 @@ if (local && process.env.NODE_ENV === "production") throw Error("Local storage i
 const localFirebaseAuth = local && process.env.REVIEW_AUTH === "firebase";
 // Any signed-in course account may use the review unless REQUIRE_ENROLLMENT=true (then courses/{id}/members/{uid} must exist).
 const requireEnrollment = process.env.REQUIRE_ENROLLMENT === "true";
-const store = local
-  ? createLocalStore(process.env.REVIEW_DATA_FILE || fileURLToPath(new URL("../.data/reviews.json", import.meta.url)))
-  : await createCloudStore(reviewConfig.courseId);
+// A misconfigured deployment answers every request with the reason instead of crashing on load.
+let store, transcripts, setupError;
+try {
+  store = local
+    ? createLocalStore(process.env.REVIEW_DATA_FILE || fileURLToPath(new URL("../.data/reviews.json", import.meta.url)))
+    : await createCloudStore(reviewConfig.courseId);
+  transcripts = await createTranscriptStore();
+} catch (error) {
+  setupError = error;
+  console.error("SERVER_SETUP_FAILED", error.message);
+}
 const patch = (id, fields) => store.mutate(id, s => ({ ...s, ...fields }));
-const transcripts = await createTranscriptStore();
 // Best-effort copy of a finished conversation to the per-student transcript database.
 // Written when the student presses End; removed when that week is restarted or reset.
 function mirror(session, user) {
@@ -50,6 +57,7 @@ function unmirror(session, user) {
 const app = express();
 if (process.env.VERCEL) app.set("trust proxy", 1);
 app.use(express.json({ limit: "100kb" }));
+app.use("/api", (req, res, next) => setupError ? res.status(500).json({ error: "SERVER_SETUP_FAILED", detail: setupError.message }) : next());
 app.use("/api", async (req, res, next) => {
   if (local) {
     if (!allowLocalRequest(req)) return res.status(403).json({ error: "LOCAL_ACCESS_ONLY" });
