@@ -54,6 +54,14 @@ export function createLocalStore(filename) {
 // Session IDs carry the student's key ("<studentId>~<uuid>"), so every session lives under that student:
 //   students/{studentId}/reviewSessions/{sessionId}   (+ private/evaluation, revisions)
 // next to the student's weekly transcripts on students/{studentId}. The top level only has `students`.
+// Firestore keeps only what the app needs: who, which week, progress, times and the messages.
+// Values that never vary for a voice conversation are filled back in when a session is read.
+const STORED = ["studentId", "weekId", "status", "messages", "createdAt", "updatedAt", "completedAt"];
+export const packSession = (s) => Object.fromEntries(STORED.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
+export const unpackSession = (id, data, courseId) => data && ({
+  id, courseId, mode: "conversation", language: "en", conversationVersion: "conversation-2", evaluationStatus: "not_started", messages: [], ...data,
+});
+
 export const sessionKey = (id) => (String(id).includes("~") ? String(id).split("~")[0] : null);
 
 export async function createCloudStore(courseId) {
@@ -71,16 +79,16 @@ export async function createCloudStore(courseId) {
   return {
     // Only consulted when REQUIRE_ENROLLMENT=true.
     enrolled: async uid => (await db.doc(`courses/${courseId}/members/${uid}`).get()).exists,
-    get: async id => (sessionKey(id) ? (await ref(id).get()).data() : undefined),
+    get: async id => (sessionKey(id) ? unpackSession(id, (await ref(id).get()).data(), courseId) : undefined),
     list: async (uid, key) => {
       const result = await (key ? student(key).collection("reviewSessions").where("studentId", "==", uid) : db.collectionGroup("reviewSessions")).get();
-      return result.docs.map(doc => doc.data());
+      return result.docs.map(doc => unpackSession(doc.id, doc.data(), courseId));
     },
-    create: s => ref(s.id).create(s),
+    create: s => ref(s.id).create(packSession(s)),
     mutate: (id, fn) => db.runTransaction(async tx => {
       const doc = ref(id);
-      const next = await fn((await tx.get(doc)).data());
-      tx.set(doc, next);
+      const next = await fn(unpackSession(id, (await tx.get(doc)).data(), courseId));
+      tx.set(doc, packSession(next));
       return next;
     }),
     saveEvaluation: (id, result) => ref(id).collection("private").doc("evaluation").set(result),
