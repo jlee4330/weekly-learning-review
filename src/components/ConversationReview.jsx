@@ -75,29 +75,29 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
   const level = Math.min(1, (bars.at(-1) + bars.at(-2) + bars.at(-3)) / 3 * 1.6);
   return <div className="continuous-conversation">
     <div className="conversation-meta"><button className="setup-week-link" disabled={busy} onClick={back} aria-label={t('Back to all weekly reviews', '전체 주차별 리뷰로 돌아가기')} title={t('All weekly reviews', '전체 주차별 리뷰')}><span className="setup-week-arrow"><ChevronLeft size={15} /></span><span>WEEK {String(session.weekId).padStart(2,'0')}</span></button><button className="restart-control" disabled={busy} onClick={reset}><RotateCcw size={15}/>{t('Restart', '처음부터 다시 시작')}</button></div>
+    <div className="agent-surface">
     <section className="agent-card" ref={stage}>{agent ? <>{lead && <p className="agent-lead">{lead}</p>}{question && <h1 className={`agent-question${question.length > 110 ? ' long' : ''}`}>{question}</h1>}{question && tail && <p className="agent-tail">{tail}</p>}</> : <h1 className="agent-question">{t('Your conversation is about to begin.', '곧 대화가 시작됩니다.')}</h1>}</section>
-    <section className="voice-stage" aria-label={t('Your microphone', '내 마이크')}>
-      <div className="voice-row">
-        <div className="voice-control">
-          {state === 'error'
-            ? <button className="round-control" onClick={connect} aria-label={t('Reconnect', '다시 연결')}><RefreshCw size={22}/></button>
-            : <button className="round-control" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? t('Resume conversation', '대화 이어하기') : t('Pause', '잠시 멈추기')}>{state === 'paused' ? <Play size={22}/> : <Pause size={22}/>}</button>}
-          <span aria-hidden="true">{state === 'error' ? t('Reconnect') : state === 'paused' ? t('Resume') : t('Pause')}</span>
+    </div>
+    <section className={`conversation-console is-${state}`} aria-label="Conversation controls">
+      <div className="console-status">
+        <div className={`live-orb console-orb is-${micIssue ? 'warning' : state}`} style={{ '--level': state === 'listening' ? level : 0 }} role="meter" aria-label="Microphone input level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={state === 'listening' ? Math.round(level * 100) : 0}>
+          <span className="orb-halo"/><span className="orb-ring"/><span className="orb-ring"/><span className="orb-sphere"><i/><i/><i/></span>
         </div>
-        <div className={`live-orb is-${micIssue ? 'warning' : state}`} style={{ '--level': state === 'listening' ? level : 0 }} role="meter" aria-label={t('Microphone input level', '마이크 입력 수준')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level * 100)}>
-          <span className="orb-halo" /><span className="orb-ring" /><span className="orb-ring" /><span className="orb-sphere"><i /><i /><i /></span>
-        </div>
-        <div className="voice-control">
-          <button className="round-control end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { await voice.current.drain(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done); })} aria-label={t('End conversation', '대화 마치기')}><X size={22}/></button>
-          <span aria-hidden="true">{busy ? t('Saving…') : t('End')}</span>
+        <div className="console-copy">
+          <p className={`voice-status is-${micIssue ? 'warning' : state}`} role="status">{micIssue ? 'Check your microphone' : labels[state]}</p>
+          <small>{state === 'speaking' ? 'Listen, then share your thoughts.' : state === 'listening' && !micIssue ? 'Your microphone is on. Take your time.' : state === 'paused' ? 'Microphone off. Resume when you’re ready.' : state === 'connecting' ? 'Getting your conversation ready.' : state === 'thinking' ? 'Preparing a response…' : 'Reconnect to continue your conversation.'}</small>
         </div>
       </div>
-      <p className={`voice-status is-${micIssue ? 'warning' : state}`} role="status">{micIssue ? t('Check your microphone', '마이크 연결을 확인해 주세요') : labels[state]}</p>
-      <small>{state === 'speaking' ? t('Your microphone is off while I’m speaking.') : state === 'listening' && !micIssue ? t('Take your time — I’ll wait until you finish your thought.') : state === 'paused' ? t('Your microphone is off while paused.') : '\u00a0'}</small>
+      <div className="console-actions">
+        {state === 'error'
+          ? <button className="conversation-action" onClick={connect}><RefreshCw size={17}/>Reconnect</button>
+          : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
+        <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { await voice.current.drain(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>
+      </div>
     </section>
     {error && <div role="alert" className="notice">{error} {!saved && <button onClick={() => action(flush)}>{t('Retry saving', '저장 재시도')}</button>}</div>}
     {state === 'paused' && recording && <div className="conversation-playback"><RecordingAudio src={recording}/></div>}
-    <details className="conversation-history"><summary>{t('Conversation transcript', '대화 기록')} <small>{saved ? t('Saved', '저장됨') : t('Saving…', '저장 중…')}</small></summary>{messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === 'student' ? t('You', '나') : t('Learning companion', '학습 에이전트')}</strong><p>{m.text}</p>{!m.complete && <small>{t('Transcription in progress or interrupted', '음성 인식 중이거나 중단된 기록')}</small>}{m.interrupted && <small>{t('Interrupted', '발화 중단됨')}</small>}</div>)}</details>
+    <details className="conversation-history"><summary>{t('Conversation transcript', '대화 기록')} <small>{saved ? t('Saved', '저장됨') : t('Saving…', '저장 중…')}</small></summary>{messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === 'student' ? t('You', '나') : t('Agent', '학습 에이전트')}</strong><p>{m.text}</p>{!m.complete && <small>{t('Transcription in progress or interrupted', '음성 인식 중이거나 중단된 기록')}</small>}{m.interrupted && <small>{t('Interrupted', '발화 중단됨')}</small>}</div>)}</details>
   </div>;
 }
 

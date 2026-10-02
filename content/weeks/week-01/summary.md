@@ -1,6 +1,6 @@
 ---
 week: 1
-title: Introduction to the course
+title: Introduction to Data-Driven AI Service Design
 status: lecture_and_schedule
 scope: Data-Driven AI Service (core components), Probabilistic System, Bayes’ Theorem, Foundation Models (Opportunity and Challenges).
 source: Week 01 Lecture Details — Introduction to Data-Driven AI Service Design

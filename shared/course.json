@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "title": "Introduction to the course",
+    "title": "Introduction to Data-Driven AI Service Design",
     "sourceSummary": "Data-Driven AI Service (core components), Probabilistic System, Bayes’ Theorem, Foundation Models (Opportunity and Challenges).",
     "source": "dasd2026/src/components/Schedule.jsx",
     "reviewAvailable": true

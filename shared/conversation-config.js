@@ -29,6 +29,7 @@ This review has exactly ${content.questions.length} questions, listed in the QUE
 ${openRule(week)}
 2. FOR EACH QUESTION: compare the student's explanation with that question's "goodEnough".
 - Good enough: briefly reflect back the key idea they said in your own words and what was good about it (one or two short sentences), then say "Let's now move on to the next question." and ask the next question using its exact wording from the QUESTION GUIDE (it is shown on screen).
+- Partly right (it covers only part of "goodEnough"): acknowledge what they got and ask one short follow-up about what is still missing before moving on. Do not move on just because something correct was said; move on only when the explanation meets "goodEnough" or after about three hint exchanges.
 - Missing, vague or wrong: NEVER state the answer, read "lookFor" or "goodEnough" aloud, or confirm a wrong idea. Discuss instead: ask a guiding question, offer the next item from "hints" in your own words, or ask for an everyday example, and let the student build the explanation. Gently probe any "misconceptions" you hear.
 - After about three hint exchanges on the same question, thank them for working through it, mention briefly that it is a good idea to revisit, then say "Let's now move on to the next question." and ask it, still without giving the answer.
 - Always use that exact transition sentence between questions, and never before the first question or after the last one.

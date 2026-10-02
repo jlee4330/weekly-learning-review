@@ -1758,3 +1758,53 @@ footer { font-size:12px; }
 .agent-card .agent-tail { color:#5b6d80; font-size:clamp(16px, 1.4vw, 19px); line-height:1.6; margin:14px 0 0; text-wrap:pretty; }
 .reset-all { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:13px; color:#a14b3c; background:#fff; border:1px solid #e8c3b9; }
 .reset-all:hover:not(:disabled) { background:#fbeeea; }
+
+/* Quiet conversation workspace with one compact control strip. */
+.continuous-conversation { max-width:960px; margin:32px auto 0; }
+.continuous-conversation .conversation-meta { padding-bottom:28px; border-bottom:1px solid #e7ecf1; }
+.conversation-meta .restart-control { border:0; border-radius:8px; color:#64748b; padding:8px 10px; background:transparent; }
+.conversation-meta .restart-control:hover:not(:disabled) { background:#f4f6f8; color:#334155; }
+.agent-surface { padding:34px 0 0; background:transparent; border:0; border-radius:0; }
+.companion-caption { display:flex; align-items:center; gap:9px; margin:0 0 18px; font-size:12px; font-weight:600; letter-spacing:.04em; color:#536b83; }
+.companion-dot { width:7px; height:7px; border-radius:50%; background:#7898bb; }
+.companion-dot.is-speaking { box-shadow:0 0 0 4px #edf3fa; }
+.companion-dot.is-listening { background:#3c8b76; }
+.continuous-conversation .agent-card { margin:0; padding:0 12px 20px 0; height:clamp(220px,30vh,320px); background:transparent; border:0; border-radius:0; scrollbar-color:#cbd5e1 transparent; }
+.continuous-conversation .agent-card .agent-lead, .continuous-conversation .agent-card .agent-tail { color:#485b70; font-size:clamp(18px,1.65vw,22px); line-height:1.65; margin-bottom:18px; }
+.continuous-conversation .agent-card h1.agent-question { font-size:clamp(25px,2.6vw,36px); line-height:1.4; font-weight:600; color:#182b40; letter-spacing:-.025em; text-wrap:initial; }
+.continuous-conversation .agent-card h1.agent-question.long { font-size:clamp(24px,2.3vw,32px); }
+.conversation-console { margin:24px 0 30px; padding:24px 0; border-top:1px solid #e2e9f0; border-bottom:1px solid #e2e9f0; display:flex; justify-content:space-between; align-items:center; gap:24px; }
+.console-status { display:flex; align-items:center; gap:22px; min-width:0; }
+.console-status .console-orb { width:64px; height:64px; flex-shrink:0; }
+.console-orb .orb-sphere, .console-orb .orb-ring { inset:10px; }
+.console-orb .orb-halo { inset:0; filter:blur(8px); }
+.console-orb .orb-sphere i { filter:blur(7px); }
+.console-copy .voice-status { margin:0 0 5px; font-size:15px; font-weight:600; }
+.console-copy small { display:block; color:#637388; font-size:12px; line-height:1.5; }
+.console-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.conversation-action { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 15px; border:1px solid #dbe3ec; border-radius:9px; background:white; color:#2e465e; font-size:13px; font-weight:550; white-space:nowrap; }
+.conversation-action:hover:not(:disabled) { background:#f0f5fa; border-color:#b7c9dc; }
+.conversation-action.end { background:#f9f2ef; color:#995242; border-color:transparent; }
+.conversation-action.end:hover:not(:disabled) { background:#f4e5df; border-color:transparent; }
+.conversation-action:disabled { opacity:.45; cursor:default; }
+.continuous-conversation .conversation-history { border-top:0; padding:0 0 24px; }
+.conversation-history summary { font-size:16px; }
+.conversation-history summary small { font-size:13px; }
+@media(max-width:760px) {
+ .conversation-console { flex-direction:column; align-items:stretch; gap:22px; }
+ .console-actions { justify-content:flex-end; }
+ .console-status { gap:16px; }
+}
+@media(max-width:480px) {
+ .continuous-conversation { margin-top:12px; }
+ .continuous-conversation .conversation-meta { padding-bottom:20px; }
+ .agent-surface { padding-top:26px; }
+ .continuous-conversation .agent-card { height:clamp(240px,36vh,340px); }
+ .console-actions > button { flex:1; padding:11px 8px; }
+ .console-status .console-orb { width:56px; height:56px; }
+}
+
+
+.conversation-history .transcript-turn strong { font-size:14px; }
+.conversation-history .transcript-turn p { font-size:18px; line-height:1.75; color:#202c3a; }
+.conversation-history .transcript-turn small { font-size:13px; }
