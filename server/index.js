@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "node:url";
 import { createLocalStore, createCloudStore, sessionIdFor } from "./storage.js";
 import { allowLocalRequest } from "./local-access.js";
+import { dashboardKeyMatches, dashboardData } from "./dashboard.js";
 import { createRealtimeToken } from "./realtime.js";
 import { asConversation, mergeMessages, completeConversation } from "../shared/conversation.js";
 import { conversationJudgeInstructions } from "../shared/conversation-config.js";
@@ -59,6 +60,14 @@ const app = express();
 if (process.env.VERCEL) app.set("trust proxy", 1);
 app.use(express.json({ limit: "100kb" }));
 app.use("/api", (req, res, next) => setupError ? res.status(500).json({ error: "SERVER_SETUP_FAILED", detail: setupError.message }) : next());
+// Instructor dashboard: no course login, a secret key from the dashboard link instead (see server/dashboard.js).
+const dashboardLimit = rateLimit({ windowMs: 60_000, limit: 30 });
+app.get("/api/dashboard", dashboardLimit, async (req, res) => {
+  if (!dashboardKeyMatches(req.get("x-dashboard-key"))) return res.status(404).json({ error: "NOT_FOUND" });
+  res.set("Cache-Control", "no-store");
+  try { res.json(await dashboardData(store)); }
+  catch (error) { console.error("DASHBOARD_FAILED", error.message); res.status(500).json({ error: "DASHBOARD_FAILED" }); }
+});
 app.use("/api", async (req, res, next) => {
   if (local) {
     if (!allowLocalRequest(req)) return res.status(403).json({ error: "LOCAL_ACCESS_ONLY" });
