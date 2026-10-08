@@ -86,6 +86,9 @@ export async function createCloudStore(courseId) {
   const app = dataApp();
   if (!app) throw Error("Set FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT (or a credentials file) for cloud storage.");
   const db = getFirestore(app);
+  // REST instead of a long-lived gRPC channel: an idle channel can go stale and leave every request hanging.
+  // Settings apply once per app; the transcript store sets the same ones.
+  try { db.settings({ preferRest: true, ignoreUndefinedProperties: true }); } catch {}
   const weeks = (key) => db.collection("students").doc(key).collection("weeks");
   const ref = (id) => {
     const key = sessionKey(id), week = sessionWeek(id);

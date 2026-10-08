@@ -26,8 +26,9 @@ export async function createTranscriptStore() {
   const app = dataApp(projectId);
   if (!app) return null;
   const db = getFirestore(app);
-  // A missing field should never make the whole transcript write fail (settings can only be applied once per app).
-  try { db.settings({ ignoreUndefinedProperties: true }); } catch {}
+  // A missing field should never make the whole transcript write fail; REST avoids a stale idle gRPC channel.
+  // Settings can only be applied once per app, so the review store sets the same ones.
+  try { db.settings({ preferRest: true, ignoreUndefinedProperties: true }); } catch {}
   const student = (session, user) => db.collection("students").doc(studentIdOf(user, session.studentId));
   return {
     projectId,
