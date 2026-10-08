@@ -69,4 +69,5 @@ test("dashboard key must match and be long enough", () => {
   assert.equal(dashboardKeyMatches(undefined, key), false);
   assert.equal(dashboardKeyMatches("short", "short"), false);
   assert.equal(dashboardKeyMatches(key, undefined), false);
+  assert.equal(dashboardKeyMatches(key, ` "${key}"\n`), true);
 });

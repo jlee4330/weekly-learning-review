@@ -7,8 +7,12 @@ import { weekContent } from "./course-content.js";
 // The key is in the URL fragment, so it never reaches server or proxy logs. Unset DASHBOARD_KEY = disabled.
 
 const digest = (value) => createHash("sha256").update(String(value)).digest();
+// Tolerate the value being pasted into the host's settings with surrounding spaces or quotes.
+const clean = (value) => String(value ?? "").trim().replace(/^(['"])(.*)\1$/s, "$2").trim();
 export function dashboardKeyMatches(given, expected = process.env.DASHBOARD_KEY) {
-  if (!expected || expected.length < 24 || !given) return false;
+  expected = clean(expected);
+  given = clean(given);
+  if (expected.length < 24 || !given) return false;
   return timingSafeEqual(digest(given), digest(expected));
 }
 
