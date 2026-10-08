@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { summarize, dashboardKeyMatches } from "../server/dashboard.js";
 
 const at = (s) => new Date(Date.UTC(2026, 9, 7, 12, 0, s)).toISOString();
@@ -62,12 +63,11 @@ test("dashboard leaves a long idle gap out of the time and marks it", () => {
   assert.deepEqual(s.transcript.map((m) => m.idleBefore), [null, 62 * 3600_000, null]);
 });
 
-test("dashboard key must match and be long enough", () => {
-  const key = "a".repeat(32);
-  assert.equal(dashboardKeyMatches(key, key), true);
-  assert.equal(dashboardKeyMatches("b".repeat(32), key), false);
-  assert.equal(dashboardKeyMatches(undefined, key), false);
-  assert.equal(dashboardKeyMatches("short", "short"), false);
-  assert.equal(dashboardKeyMatches(key, undefined), false);
-  assert.equal(dashboardKeyMatches(key, ` "${key}"\n`), true);
+test("dashboard key is checked against its hash", () => {
+  const key = "a".repeat(32), hash = createHash("sha256").update(key).digest("hex");
+  assert.equal(dashboardKeyMatches(key, hash), true);
+  assert.equal(dashboardKeyMatches(` ${key}\n`, hash), true);
+  assert.equal(dashboardKeyMatches("b".repeat(32), hash), false);
+  assert.equal(dashboardKeyMatches(undefined, hash), false);
+  assert.equal(dashboardKeyMatches("short", createHash("sha256").update("short").digest("hex")), false);
 });

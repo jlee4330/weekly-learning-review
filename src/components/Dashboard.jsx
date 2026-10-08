@@ -111,9 +111,7 @@ export default function Dashboard({ dashKey }) {
     try {
       const r = await fetch("/api/dashboard", { headers: { "X-Dashboard-Key": dashKey }, cache: "no-store", signal: AbortSignal.timeout(30000) })
         .catch((e) => { throw Error(e.name === "TimeoutError" ? "서버 응답이 없습니다. 페이지를 새로고침해 다시 시도하세요." : "서버에 연결할 수 없습니다."); });
-      if (r.status === 503 && (await r.clone().json().catch(() => ({}))).error === "DASHBOARD_KEY_NOT_SET")
-        throw Error("서버에 DASHBOARD_KEY가 설정되지 않았습니다. 배포 환경 변수에 추가한 뒤 다시 배포하세요.");
-      if (!r.ok) throw Error(r.status === 404 ? "링크가 올바르지 않습니다. (서버의 DASHBOARD_KEY와 다릅니다)"
+      if (!r.ok) throw Error(r.status === 404 ? "링크가 올바르지 않습니다."
         : [502, 503, 504].includes(r.status) ? "API 서버가 응답하지 않습니다. 서버가 켜져 있는지 확인하고 페이지를 새로고침하세요."
         : `불러오기 실패 (${r.status})`);
       setData(await r.json());

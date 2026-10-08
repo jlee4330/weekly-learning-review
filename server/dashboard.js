@@ -3,17 +3,17 @@ import { sessionKey } from "./storage.js";
 import { weekContent } from "./course-content.js";
 
 // Instructor dashboard: every student's weekly transcripts with time spent and how far through the questions they got.
-// It has no login; it is opened by a secret link (/#/dash/<DASHBOARD_KEY>) and sends the key in a header.
-// The key is in the URL fragment, so it never reaches server or proxy logs. Unset DASHBOARD_KEY = disabled.
+// It has no login; it opens from a secret link, /#/dash/<key>, and the page sends the key in a header.
+// The key is in the URL fragment, so it never reaches server or proxy logs. The repository is public, so only the
+// SHA-256 of the key is kept here: the key is 32 random characters and cannot be recovered from it.
+// To change the link, put the hash of a new key here (or set DASHBOARD_KEY on the server to override it):
+//   node -e 'const k=require("crypto").randomBytes(24).toString("base64url");console.log(k, require("crypto").createHash("sha256").update(k).digest("hex"))'
+const DASHBOARD_KEY_SHA256 = "125dd0a704ec6c4c5c5ad8e1530e3faf275408540993ca788df04cd02b5f797c";
 
 const digest = (value) => createHash("sha256").update(String(value)).digest();
-// Tolerate the value being pasted into the host's settings with surrounding spaces or quotes.
-const clean = (value) => String(value ?? "").trim().replace(/^(['"])(.*)\1$/s, "$2").trim();
-export function dashboardKeyMatches(given, expected = process.env.DASHBOARD_KEY) {
-  expected = clean(expected);
-  given = clean(given);
-  if (expected.length < 24 || !given) return false;
-  return timingSafeEqual(digest(given), digest(expected));
+export function dashboardKeyMatches(given, expectedHash = process.env.DASHBOARD_KEY?.trim() ? digest(process.env.DASHBOARD_KEY.trim()).toString("hex") : DASHBOARD_KEY_SHA256) {
+  if (!given || given.length < 24) return false;
+  return timingSafeEqual(digest(given.trim()), Buffer.from(expectedHash, "hex"));
 }
 
 const ms = (a, b) => (a && b ? Math.max(0, Date.parse(b) - Date.parse(a)) : null);

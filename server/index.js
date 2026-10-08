@@ -63,8 +63,6 @@ app.use("/api", (req, res, next) => setupError ? res.status(500).json({ error: "
 // Instructor dashboard: no course login, a secret key from the dashboard link instead (see server/dashboard.js).
 const dashboardLimit = rateLimit({ windowMs: 60_000, limit: 30 });
 app.get("/api/dashboard", dashboardLimit, async (req, res) => {
-  // Says only that no key is configured (so a missing setting is not mistaken for a wrong link); never the key.
-  if (!process.env.DASHBOARD_KEY?.trim()) return res.status(503).json({ error: "DASHBOARD_KEY_NOT_SET" });
   if (!dashboardKeyMatches(req.get("x-dashboard-key"))) return res.status(404).json({ error: "NOT_FOUND" });
   res.set("Cache-Control", "no-store");
   try { res.json(await dashboardData(store)); }
