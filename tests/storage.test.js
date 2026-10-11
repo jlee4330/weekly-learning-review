@@ -47,14 +47,28 @@ test("a session ID locates students/{studentId}/weeks/Week{N}", () => {
 });
 
 import { packSession, unpackSession } from "../server/storage.js";
-test("Firestore stores only owner, week, status and times; a saved transcript is read back as messages", () => {
+test("Firestore stores owner, week, status, times and recording consent; a saved transcript is read back as messages", () => {
   const session = { id: "k~Week1", studentId: "uid", weekId: 1, status: "completed", messages: [{ id: "m", text: "hi" }], createdAt: "c", updatedAt: "u", completedAt: "d",
     mode: "conversation", language: "en", courseId: "id40018-2026", conversationVersion: "conversation-2", courseContextVersion: "v", rubricVersion: "r", evaluationStatus: "pending" };
   const stored = packSession(session);
-  assert.deepEqual(Object.keys(stored).sort(), ["completedAt", "createdAt", "status", "studentId", "updatedAt", "weekId"]);
+  assert.deepEqual(Object.keys(stored).sort(), ["audioConsent", "audioConsentAt", "completedAt", "createdAt", "status", "studentId", "updatedAt", "weekId"]);
   assert.equal(packSession({ ...session, completedAt: undefined }).completedAt, null);
   const read = unpackSession("k~Week1", { ...stored, transcript: [{ role: "assistant", text: "Q?", at: "t0" }, { role: "student", text: "A.", at: "t1" }] }, "id40018-2026");
   assert.equal(read.id, "k~Week1"); assert.equal(read.mode, "conversation"); assert.equal(read.status, "completed"); assert.equal("transcript" in read, false);
   assert.deepEqual(read.messages.map((m) => [m.role, m.text, m.createdAt, m.order]), [["assistant", "Q?", "t0", 0], ["student", "A.", "t1", 1]]);
   assert.deepEqual(unpackSession("k~Week2", { status: "in_progress" }, "c").messages, []);
+});
+
+test("local storage removes one week entirely", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "wlr-store-"));
+  try {
+    const store = createLocalStore(join(dir, "reviews.json"));
+    await store.create({ id: "kim~Week1", studentId: "alice", weekId: 1 });
+    await store.create({ id: "kim~Week2", studentId: "alice", weekId: 2 });
+    await store.saveEvaluation("kim~Week1", { score: 3 });
+    await store.remove("kim~Week1");
+    assert.equal(await store.get("kim~Week1"), undefined);
+    assert.deepEqual(await store.getEvaluation("kim~Week1"), {});
+    assert.deepEqual((await store.list("alice")).map(s => s.id), ["kim~Week2"]);
+  } finally { await rm(dir, { recursive: true, force: true }); }
 });

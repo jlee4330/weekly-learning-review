@@ -42,10 +42,26 @@ export const repository = isDemo
   : {
       list: () => api("/sessions"),
       create: (weekId, language) => api("/sessions", { weekId, language }),
-      openConversation: (s) => api(`/sessions/${s.id}/conversation`, {}),
+      openConversation: (s, audioConsent = false) => api(`/sessions/${s.id}/conversation`, { audioConsent }),
+      uploadAudio: async (s, blob, startedAt) => {
+        if (requiresLogin && !auth?.currentUser) throw Error("AUTH_REQUIRED");
+        const response = await fetch(`/api/sessions/${s.id}/audio`, {
+          method: "POST", body: blob, signal: AbortSignal.timeout(30000),
+          headers: {
+            "Content-Type": blob.type,
+            "X-Audio-Started-At": startedAt,
+            ...(isLocal ? { "X-Review-Client": "browser" } : {}),
+            ...(requiresLogin ? { Authorization: `Bearer ${await auth.currentUser.getIdToken()}` } : {}),
+          },
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.stored) throw Error(result.error || "AUDIO_UPLOAD_FAILED");
+        return result;
+      },
       messages: (s, messages) => api(`/sessions/${s.id}/messages`, { messages }),
       complete: (s) => api(`/sessions/${s.id}/complete`, { messages: s.messages || [] }),
       reset: (s) => api(`/sessions/${s.id}/reset`, {}),
+      remove: (s) => api(`/sessions/${s.id}/delete`, {}),
       resetAll: () => api("/dev/reset-all", {}),
       draft: (s, text) => api(`/sessions/${s.id}/draft`, { text }),
       answer: (s, text) =>

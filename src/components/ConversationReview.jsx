@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Pause, Play, RefreshCw, RotateCcw, X } from 'lucide-react';
+import { AudioArchive } from '../services/audio-archive';
 import { RealtimeConversation } from '../services/conversation-voice';
 import { repository } from '../services/api';
 import { reviewErrorMessage } from '../services/errors';
@@ -8,8 +9,9 @@ import { weekQuestions } from '../../content/weeks/index.js';
 
 export default function ConversationReview({ session, deviceId, onUpdate, onComplete, onLeave }) {
   const t = (en) => en;
+  const audioFailed = useRef(false);
   const current = useRef(session), pending = useRef(new Map()), voice = useRef(), timer = useRef(), queue = useRef(Promise.resolve()), url = useRef(''), mounted = useRef(true), stage = useRef();
-  const [messages, setMessages] = useState(session.messages || []), [state, setState] = useState('connecting'), [error, setError] = useState(''), [saved, setSaved] = useState(true), [busy, setBusy] = useState(false), [recording, setRecording] = useState(''), [bars, setBars] = useState(Array(48).fill(0)), [signal, setSignal] = useState('idle');
+  const [audioError, setAudioError] = useState(''), [messages, setMessages] = useState(session.messages || []), [state, setState] = useState('connecting'), [error, setError] = useState(''), [saved, setSaved] = useState(true), [busy, setBusy] = useState(false), [recording, setRecording] = useState(''), [bars, setBars] = useState(Array(48).fill(0)), [signal, setSignal] = useState('idle');
   function flush() {
     clearTimeout(timer.current); timer.current = null;
     const task = queue.current.catch(() => {}).then(async () => {
@@ -31,26 +33,33 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
     if (!timer.current) timer.current = setTimeout(() => { timer.current = null; flush().catch(() => setError(t('Your conversation has not been saved yet. Retry saving before leaving.', '대화가 아직 저장되지 않았습니다. 나가기 전에 저장을 다시 시도해 주세요.'))); }, 1500);
   }
   async function connect() {
-    voice.current?.close(); setError(''); setState('connecting');
+    await voice.current?.archive?.finish(); voice.current?.close(); setError(''); setState('connecting');
     const v = new RealtimeConversation({ deviceId, onInput: (level, status) => { if (voice.current !== v) return; setSignal(status); setBars(old => status === 'idle' ? Array(48).fill(0) : [...old.slice(1), level]); }, onRecording: blob => { if (url.current) URL.revokeObjectURL(url.current); url.current = blob ? URL.createObjectURL(blob) : ''; setRecording(url.current); }, onRecordingError: () => setError(t('Audio playback is unavailable in this browser. Your transcript will still be saved.', '이 브라우저에서 녹음 재생을 사용할 수 없습니다. 대화 기록은 계속 저장됩니다.')) });
+    if (current.current.audioConsent) v.archive = new AudioArchive({
+      upload: (blob, startedAt) => repository.uploadAudio(current.current, blob, startedAt),
+      onError: () => { audioFailed.current = true; if (mounted.current) setAudioError('Some voice recordings could not be saved. Your transcript can still be saved.'); },
+    });
     voice.current = v;
-    const fail = e => { if (!mounted.current || voice.current !== v) return; console.warn('Realtime failure', e.diagnostics || { code: e.message }); setError(reviewErrorMessage(e, session.language)); setState('error'); v.close(); };
+    const fail = e => { if (!mounted.current || voice.current !== v) return; console.warn('Realtime failure', e.diagnostics || { code: e.message }); setError(reviewErrorMessage(e, session.language)); setState('error'); v.archive?.finish(); v.close(); };
     try { await v.begin(current.current, { onMessage: m => { if (mounted.current && voice.current === v) receive(m); }, onState: s => { if (mounted.current && voice.current === v) setState(s); }, onError: fail }); } catch(e) { fail(e); }
   }
   useEffect(() => {
     mounted.current = true; connect();
     const warn = e => { if (pending.current.size) { e.preventDefault(); e.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
-    return () => { mounted.current = false; clearTimeout(timer.current); voice.current?.close(); if (url.current) URL.revokeObjectURL(url.current); window.removeEventListener('beforeunload', warn); flush().catch(() => {}); };
+    return () => { mounted.current = false; clearTimeout(timer.current); voice.current?.archive?.discard(); voice.current?.close(); if (url.current) URL.revokeObjectURL(url.current); window.removeEventListener('beforeunload', warn); flush().catch(() => {}); };
   }, []);
   async function action(fn) { setBusy(true); setError(''); try { await fn(); } catch(e) { setError(e.message === 'NO_STUDENT_SPEECH' ? t('Say a little about what you learned before requesting feedback.', '피드백을 받기 전에 배운 내용에 대해 조금 이야기해 주세요.') : reviewErrorMessage(e, session.language)); } finally { if (mounted.current) setBusy(false); } }
   // Stops the voice session, discards unsaved transcript updates and clears the stored conversation.
   async function clearConversation() {
-    voice.current?.close(); voice.current = null;
+    const previous = voice.current;
+    const discarded = previous?.archive?.discard();
+    previous?.close(); voice.current = null;
+    await discarded;
     clearTimeout(timer.current); timer.current = null; pending.current.clear();
     await queue.current.catch(() => {});
     current.current = await repository.reset(current.current);
-    setMessages([]); setSaved(true); setRecording(''); onUpdate(current.current);
+    setMessages([]); setSaved(true); setAudioError(''); audioFailed.current = false; setRecording(''); onUpdate(current.current);
   }
   // Restart: clear, then reconnect so the opening plays again.
   function reset() {
@@ -91,12 +100,14 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
       </div>
       <div className="console-actions">
         {state === 'error'
-          ? <button className="conversation-action" onClick={connect}><RefreshCw size={17}/>Reconnect</button>
+          ? <button className="conversation-action" disabled={busy} onClick={() => action(connect)}><RefreshCw size={17}/>Reconnect</button>
           : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
-        <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { setRecording(''); await voice.current.drain(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>
+        {/* End appears once every question is done (the agent has said the closing line); weeks without a fixed question set keep it. */}
+        {(!progress || progress.done) && <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { setRecording(''); await voice.current.drain(); await voice.current.archive?.finish(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done, audioFailed.current); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>}
       </div>
       {state === 'paused' && recording && <div className="console-playback"><RecordingAudio src={recording}/></div>}
     </section>
+    {audioError && <div role="status" className="notice">{audioError}</div>}
     {error && <div role="alert" className="notice">{error} {!saved && <button onClick={() => action(flush)}>{t('Retry saving', '저장 재시도')}</button>}</div>}
     <details className="conversation-history"><summary>{t('Conversation transcript', '대화 기록')} <small>{saved ? t('Saved', '저장됨') : t('Saving…', '저장 중…')}</small></summary>{messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === 'student' ? t('You', '나') : t('Agent', '학습 에이전트')}</strong><p>{m.text}</p>{!m.complete && <small>{t('Transcription in progress or interrupted', '음성 인식 중이거나 중단된 기록')}</small>}{m.interrupted && <small>{t('Interrupted', '발화 중단됨')}</small>}</div>)}</details>
   </div>;

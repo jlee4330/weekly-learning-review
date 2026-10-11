@@ -1,3 +1,4 @@
+import { ConversationMixer } from "./conversation-mixer.js";
 import { realtimeError, canRetryResponse } from "./realtime-errors.js";
 import { RealtimeVoice } from './voice';
 import { speechClip } from './speech-clip';
@@ -18,6 +19,17 @@ export class RealtimeConversation extends RealtimeVoice {
     this.order = Math.max(-1, ...(session.messages || []).map(m => m.order)) + 1;
     await super.connect(session, () => {}, onError, () => {});
     if (this.closed) return;
+    if (this.archive) {
+      try {
+        this.mixer = new ConversationMixer(this.stream);
+        this.mixer.setAgent(this.remoteStream);
+        await this.mixer.ready();
+      } catch (error) {
+        this.archive.onError(error);
+        this.mixer?.close(); this.mixer = null;
+      }
+      if (this.closed) return;
+    }
     for (const m of (session.messages || []).filter(m => m.complete && m.text).slice(-40)) {
       this.send({ type: 'conversation.item.create', item: { type: 'message', role: m.role === 'student' ? 'user' : 'assistant', content: [{ type: m.role === 'student' ? 'input_text' : 'output_text', text: m.text }] } });
     }
@@ -25,6 +37,19 @@ export class RealtimeConversation extends RealtimeVoice {
     this.openingInstructions = `Speak only the following opening in English, exactly as written, then wait for the student: ${JSON.stringify(this.opening)}`;
     this.resume();
     this.send({ type: 'response.create', ...(!session.messages?.some(m => m.role === 'assistant' && m.text) && this.opening ? { response: { instructions: `Speak only the following opening in English, exactly as written, then wait for the student: ${JSON.stringify(this.opening)}` } } : {}) });
+  }
+  onRemoteStream(stream) {
+    this.remoteStream = stream;
+    if (this.mixer) {
+      try { this.mixer.setAgent(stream); }
+      catch (error) { this.archive?.onError(error); }
+    }
+  }
+  close() {
+    // Finalize before stopping the mixer output, including connection failures.
+    this.archive?.finish();
+    this.mixer?.close();
+    super.close();
   }
   message(id, role, text, complete, append = false) {
     if (!id) return;
@@ -112,6 +137,7 @@ export class RealtimeConversation extends RealtimeVoice {
     this.send({ type: 'session.update', session: { type: 'realtime', audio: { input: { turn_detection: conversationConfig.turnDetection } } } });
     this.stream.getTracks().forEach(t => { t.enabled = true; });
     this.inputMonitor.start();
+    if (this.mixer) this.archive?.start(this.mixer.stream);
     this.onRecording(null);
     // Times (s, relative to the recording) when the student spoke, used to cut "your response" playback.
     this.speech = []; this.recordingStart = performance.now();
@@ -123,6 +149,7 @@ export class RealtimeConversation extends RealtimeVoice {
   async pause({ keepRecording = true } = {}) {
     if (this.paused) { if (!keepRecording) this.recorder.discard(); return; }
     this.paused = true;
+    this.archive?.pause();
     clearTimeout(this.replyTimer);
     this.interruptedByPause = this.responding || this.playing;
     this.send({ type: 'session.update', session: { type: 'realtime', audio: { input: { turn_detection: null } } } });

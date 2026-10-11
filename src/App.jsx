@@ -32,6 +32,7 @@ import ConversationReview from "./components/ConversationReview";
 const hasStarted = (s) => !!s && (s.mode === "conversation" ? s.messages?.some((m) => m.text?.trim()) : s.turns?.length > 0 || !!s.draft?.trim());
 import LoginDialog from "./components/LoginDialog";
 function App() {
+  const [audioConsent, setAudioConsent] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [done, setDone] = useState("");
   useEffect(() => { if (!done) return; const id = setTimeout(() => setDone(""), 6000); return () => clearTimeout(id); }, [done]);
@@ -143,11 +144,11 @@ function App() {
     voice.current?.close();
     voice.current = null;
   }
-  // Ending a conversation returns to the list with a short congratulation. Only the transcript is kept; no AI evaluation runs.
-  function finishConversation(s) {
+  // Ending a conversation returns to the list with a short congratulation. The transcript and consented conversation recordings are kept; no AI evaluation runs.
+  function finishConversation(s, audioFailed = false) {
     update(s);
     navigate("reviews");
-    setDone(`Nice work! You've finished your Week ${String(s.weekId).padStart(2, "0")} review.`);
+    setDone(`Nice work! You've finished your Week ${String(s.weekId).padStart(2, "0")} review.${audioFailed ? " Your transcript was saved, but some voice recordings could not be saved." : ""}`);
   }
   function navigate(p) {
     if (page === "review") {
@@ -203,9 +204,18 @@ function App() {
       setSessions(await repository.resetAll());
     });
   }
+  // Deletes the student's own review for one week (and its saved transcript) so it can be taken again.
+  function resetWeek(w, s) {
+    if (!confirm(t(`Reset Week ${w.id}? Your conversation and transcript for this week will be deleted, and you can start it again.`))) return;
+    run(async () => {
+      if (sessionRef.current?.id === s.id) update(null);
+      setSessions(await repository.remove(s));
+    });
+  }
   function choose(w, s) {
     cleanup();
     setWeek(w);
+    setAudioConsent(false);
     setMic("idle");
     setError("");
     if (s?.status === "completed") {
@@ -243,7 +253,7 @@ function App() {
       let s = session?.weekId === week.id && session.status === "in_progress"
         ? session : await repository.create(week.id, lang);
       if (!isDemo) {
-        s = await repository.openConversation(s);
+        s = await repository.openConversation(s, audioConsent);
         update(s);
         setPage("conversation");
         return;
@@ -561,6 +571,17 @@ function App() {
                                   : t("Ready to explore", "시작 가능")}
                           </span>
                         </div>
+                        {s && open && (progress === "done" || progress === "progress") && (
+                          <button
+                            className="row-reset"
+                            disabled={busy || (!isDemo && !user)}
+                            onClick={() => resetWeek(w, s)}
+                            aria-label={t(`Reset Week ${w.id}`)}
+                            title={t("Delete this week's review and start again")}
+                          >
+                            <RotateCcw size={14} />{t("Reset")}
+                          </button>
+                        )}
                         <button
                           disabled={!open || (!isDemo && !user)}
                           className="row-action"
@@ -652,10 +673,16 @@ function App() {
                 </button>
                 {mic === "ready" && <button className="mic-stop" onClick={stopMicTest}>{t("Stop test", "테스트 종료")}</button>}
               </div>
+              {!isDemo && <label className="audio-consent">
+                <input type="checkbox" checked={audioConsent} disabled={busy} onChange={e => setAudioConsent(e.target.checked)} />
+                <span>I agree to have this conversation recorded.
+                  <small>Your voice and the agent’s are saved for this review.</small>
+                </span>
+              </label>}
               <div className="setup-actions">
                 <button
                   className="primary"
-                  disabled={busy || (!isDemo && mic !== "ready")}
+                  disabled={busy || (!isDemo && (mic !== "ready" || !audioConsent))}
                   onClick={start}
                 >
                   {busy
@@ -665,7 +692,7 @@ function App() {
                       : isDemo ? t("Begin review", "리뷰 시작") : t("Start conversation", "대화 시작")}
                   <ArrowRight size={17} />
                 </button>
-                {!isDemo && mic !== "ready" && !busy && <span className="setup-hint">{t("Test your microphone to start.", "마이크를 테스트하면 시작할 수 있어요.")}</span>}
+                {!isDemo && !busy && (mic !== "ready" || !audioConsent) && <span className="setup-hint">{mic !== "ready" ? t("Test your microphone to start.", "마이크를 테스트하면 시작할 수 있어요.") : "Agree to recording to start."}</span>}
               </div>
             </div>
           )}

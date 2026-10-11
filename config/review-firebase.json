@@ -1,12 +1,12 @@
 {
-  "purpose": "Weekly Learning Review transcript storage; authentication remains on the course project",
+  "purpose": "Weekly Learning Review transcript and conversation audio storage; authentication remains on the course project",
   "firebase": {
-    "apiKey": "AIzaSyDKklMLAaUp-pXXNOLYyujZoHQYBkz3fQs",
-    "authDomain": "id40018-7e359.firebaseapp.com",
-    "projectId": "id40018-7e359",
-    "storageBucket": "id40018-7e359.firebasestorage.app",
-    "messagingSenderId": "265536187278",
-    "appId": "1:265536187278:web:c69fdcf7e5affdd2b712df",
-    "measurementId": "G-QS8WE2KBVB"
+    "apiKey": "AIzaSyApElUvVbZFi2YxIdXXkm6OAU0BhqP4IZw",
+    "authDomain": "id40018ddasd.firebaseapp.com",
+    "projectId": "id40018ddasd",
+    "storageBucket": "id40018ddasd.firebasestorage.app",
+    "messagingSenderId": "166103109353",
+    "appId": "1:166103109353:web:e1b95d69212c65f54daa78",
+    "measurementId": "G-NTKQ2G8L9F"
   }
 }

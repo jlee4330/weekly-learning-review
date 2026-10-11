@@ -15,6 +15,7 @@ export function reviewErrorMessage(error, language = "en") {
       "This request was blocked by the local connection settings. Refresh this page and try again. Your saved answers are kept.",
       "로컬 연결 설정 때문에 요청이 차단되었습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요. 저장된 답변은 유지됩니다.",
     ],
+    AUDIO_CONSENT_REQUIRED: ["Agree to recording to start the conversation.", "대화를 시작하려면 녹음에 동의해 주세요."],
     AUTH_REQUIRED: ["Please sign in again to continue your review.", "리뷰를 계속하려면 다시 로그인해 주세요."],
     CONNECTION_TIMEOUT: ["The voice connection timed out. Select Reconnect to try again.", "음성 연결 시간이 초과되었습니다. ‘다시 연결’을 눌러 주세요."],
     CONNECTION_FAILED: ["The voice connection could not be established. Select Reconnect to try again.", "음성 연결을 시작하지 못했습니다. ‘다시 연결’을 눌러 주세요."],

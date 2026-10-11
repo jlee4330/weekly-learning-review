@@ -50,7 +50,13 @@ export function demoDecision(s) {
   return { action: "next" };
 }
 export const demoRepository = {
+  uploadAudio: async () => ({ stored: false }),
   list: async () => readAll(),
+  remove: async (s) => {
+    const rest = readAll().filter((x) => x.id !== s.id);
+    localStorage.setItem(KEY, JSON.stringify(rest));
+    return rest;
+  },
   create: async (w, l) =>
     save(createSession(w, l, "demo-student", crypto.randomUUID())),
   draft: async (s, text) =>

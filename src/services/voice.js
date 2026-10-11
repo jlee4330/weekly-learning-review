@@ -41,7 +41,9 @@ export class RealtimeVoice {
       this.audio.autoplay = true;
       this.watchPlayback();
       this.pc.ontrack = (e) => {
-        this.audio.srcObject = e.streams[0];
+        const stream = e.streams[0] || new MediaStream([e.track]);
+        this.audio.srcObject = stream;
+        this.onRemoteStream?.(stream);
         this.audio.play().catch(() => onError(Error("AUDIO_PLAYBACK")));
       };
       this.pc.onconnectionstatechange = () => {

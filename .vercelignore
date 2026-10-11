@@ -1,0 +1,11 @@
+.git/
+node_modules/
+dist/
+.env
+.env.*
+secrets/
+.data/
+test-results/
+playwright-report/
+tests/
+.DS_Store

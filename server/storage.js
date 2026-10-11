@@ -41,6 +41,7 @@ export function createLocalStore(filename) {
       data.sessions[id] = next;
       return next;
     }),
+    remove: (id) => change(data => { delete data.sessions[id]; delete data.evaluations[id]; delete data.revisions[id]; }),
     saveEvaluation: (id, result) => change(data => { data.evaluations[id] = result; }),
     getEvaluation: async (id) => { await queue; return (await read()).evaluations[id] || {}; },
     saveReview: (id, audit) => change(data => {
@@ -62,7 +63,7 @@ export function createLocalStore(filename) {
 // Leaving or reloading mid-conversation starts the week over, the same as the back button.
 // A session ID is "<studentId>~Week<N>", so the ID alone locates its document.
 // Only what the app needs is stored; values that never vary for a voice conversation are filled back in on read.
-const STORED = ["studentId", "weekId", "status", "createdAt", "updatedAt", "completedAt"];
+const STORED = ["studentId", "weekId", "status", "createdAt", "updatedAt", "completedAt", "audioConsent", "audioConsentAt"];
 // Every stored field is written (missing ones as null) so a merge-write also clears what a reset removed,
 // while the separately written `transcript` field is left alone.
 export const packSession = (s) => Object.fromEntries(STORED.map((k) => [k, s[k] ?? null]));
@@ -85,7 +86,7 @@ export async function createCloudStore(courseId) {
   const { getFirestore } = await import("firebase-admin/firestore");
   const app = dataApp();
   if (!app) throw Error("Set FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT (or a credentials file) for cloud storage.");
-  const db = getFirestore(app);
+  const db = getFirestore(app, process.env.FIRESTORE_DATABASE_ID || "(default)");
   // REST instead of a long-lived gRPC channel: an idle channel can go stale and leave every request hanging.
   // Settings apply once per app; the transcript store sets the same ones.
   try { db.settings({ preferRest: true, ignoreUndefinedProperties: true }); } catch {}
@@ -113,6 +114,8 @@ export async function createCloudStore(courseId) {
       tx.set(doc, packSession(next), { merge: true });
       return next;
     }),
+    // Deletes the week's document (state and transcript), so the week starts fresh.
+    remove: id => ref(id).delete(),
     saveEvaluation: async () => {},
     getEvaluation: async () => ({}),
     saveReview: async () => {},

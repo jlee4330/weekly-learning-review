@@ -25,7 +25,7 @@ export async function createTranscriptStore() {
   const { getFirestore, FieldValue } = await import("firebase-admin/firestore");
   const app = dataApp(projectId);
   if (!app) return null;
-  const db = getFirestore(app);
+  const db = getFirestore(app, process.env.FIRESTORE_DATABASE_ID || "(default)");
   // A missing field should never make the whole transcript write fail; REST avoids a stale idle gRPC channel.
   // Settings can only be applied once per app, so the review store sets the same ones.
   try { db.settings({ preferRest: true, ignoreUndefinedProperties: true }); } catch {}
@@ -39,6 +39,11 @@ export async function createTranscriptStore() {
       batch.set(ref, { uid: session.studentId, email: user?.email || null, studentId: ref.id, lastActiveAt: new Date().toISOString() }, { merge: true });
       batch.set(ref.collection("weeks").doc(weekKey(session.weekId)), { transcript: weekEntry(session) }, { merge: true });
       await batch.commit();
+    },
+    // Reset from the week list: delete that week's document entirely.
+    async remove(session, user) {
+      if (session?.mode !== "conversation") return;
+      await student(session, user).collection("weeks").doc(weekKey(session.weekId)).delete();
     },
     // Restart / back / Reset all: remove that week's transcript.
     async clear(session, user) {

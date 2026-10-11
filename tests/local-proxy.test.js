@@ -43,6 +43,15 @@ test('browser requests through the real Vite proxy can save drafts while other o
     assert.equal(saved.status, 200);
     const sessions = await (await fetch(`${origin}/api/sessions`, { headers })).json();
     assert.equal(sessions[0].draft, 'This answer must survive a reload.');
+    const audioHeaders = { ...headers, 'Content-Type': 'audio/webm', 'X-Audio-Started-At': new Date().toISOString() };
+    const deniedAudio = await fetch(`${origin}/api/sessions/${session.id}/audio`, { method: 'POST', headers: audioHeaders, body: 'test' });
+    assert.equal(deniedAudio.status, 403);
+    const consent = await fetch(`${origin}/api/sessions/${session.id}/conversation`, { method: 'POST', headers, body: JSON.stringify({ audioConsent: true }) });
+    assert.equal((await consent.json()).audioConsent, true);
+    const unavailable = await fetch(`${origin}/api/sessions/${session.id}/audio`, { method: 'POST', headers: audioHeaders, body: 'test' });
+    assert.equal((await unavailable.json()).stored, false);
+    const oversized = await fetch(`${origin}/api/sessions/${session.id}/audio`, { method: 'POST', headers: audioHeaders, body: Buffer.alloc(4 * 1024 * 1024 + 1) });
+    assert.equal(oversized.status, 413);
     for (const badHeaders of [{ ...headers, Origin: 'https://example.com' }, { Origin: origin }]) {
       const denied = await fetch(`${origin}/api/sessions`, { headers: badHeaders });
       assert.equal(denied.status, 403);

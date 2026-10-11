@@ -1,6 +1,7 @@
 import { verifyCourseLogin } from "./firebase-admin.js";
 import { weekContent } from "./course-content.js";
 import { createTranscriptStore, studentIdOf } from "./transcript-store.js";
+import { createAudioStore } from "./audio-store.js";
 import { evaluation, validateEvidence } from "./evaluation.js";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -32,12 +33,13 @@ const localFirebaseAuth = local && process.env.REVIEW_AUTH === "firebase";
 // Any signed-in course account may use the review unless REQUIRE_ENROLLMENT=true (then courses/{id}/members/{uid} must exist).
 const requireEnrollment = process.env.REQUIRE_ENROLLMENT === "true";
 // A misconfigured deployment answers every request with the reason instead of crashing on load.
-let store, transcripts, setupError;
+let store, transcripts, audio, setupError;
 try {
   store = local
     ? createLocalStore(process.env.REVIEW_DATA_FILE || fileURLToPath(new URL("../.data/reviews.json", import.meta.url)))
     : await createCloudStore(reviewConfig.courseId);
   transcripts = await createTranscriptStore();
+  audio = await createAudioStore();
 } catch (error) {
   setupError = error;
   console.error("SERVER_SETUP_FAILED", error.message);
@@ -52,9 +54,12 @@ function mirror(session, user) {
   transcripts.save(session, user).catch((error) => console.error("TRANSCRIPT_MIRROR_FAILED", error.message));
 }
 // Restarting or resetting a week also removes its transcript from Firestore.
-function unmirror(session, user) {
-  if (!transcripts || !session) return;
-  transcripts.clear(session, user).catch((error) => console.error("TRANSCRIPT_CLEAR_FAILED", error.message));
+async function unmirror(session, user) {
+  if (!session) return;
+  await Promise.all([
+    transcripts?.clear(session, user),
+    audio?.clear(session, user),
+  ]);
 }
 const app = express();
 if (process.env.VERCEL) app.set("trust proxy", 1);
@@ -182,7 +187,21 @@ app.post(
 app.post("/api/sessions/:id/conversation", handler(async (req, res) => {
   const s = await getSession(req);
   if (s.status !== "in_progress") throw Error("COMPLETE");
-  res.json(publicSession(await store.mutate(s.id, prepareConversation)));
+  // Agreeing to recording is required to start; the time of agreement is recorded on every start.
+  const parsed = z.object({ audioConsent: z.literal(true) }).safeParse(req.body || {});
+  if (!parsed.success) throw Object.assign(Error("AUDIO_CONSENT_REQUIRED"), { status: 400 });
+  const { audioConsent } = parsed.data;
+  res.json(publicSession(await store.mutate(s.id, current => ({ ...prepareConversation(current), audioConsent, audioConsentAt: new Date().toISOString() }))));
+}));
+// One part of the mixed student and agent conversation audio (raw body; under Vercel's 4.5 MB request limit).
+app.post("/api/sessions/:id/audio", express.raw({ type: ["audio/*"], limit: "4mb" }), handler(async (req, res) => {
+  const s = await getSession(req);
+  if (!s.audioConsent) throw Object.assign(Error("AUDIO_CONSENT_REQUIRED"), { status: 403 });
+  if (!audio) return res.json({ ok: false, stored: false });
+  if (!Buffer.isBuffer(req.body) || !req.body.length) throw Error("EMPTY_AUDIO");
+  const startedAt = z.string().datetime().parse(req.get("x-audio-started-at"));
+  const path = await audio.save(s, req.user, { data: req.body, contentType: req.get("content-type").split(";")[0], startedAt });
+  res.json({ ok: true, stored: true, path });
 }));
 const messageSchema = z.object({
   id: z.string().min(1).max(160), role: z.enum(["student", "assistant"]), text: z.string().max(20000),
@@ -205,14 +224,25 @@ app.post("/api/sessions/:id/reset", handler(async (req, res) => {
   const s = await getSession(req);
   if (s.mode !== "conversation") throw Error("NOT_A_CONVERSATION");
   const reset = await store.mutate(s.id, resetConversation);
-  unmirror(reset, req.user);
+  await unmirror(reset, req.user);
   res.json(publicSession(reset));
+}));
+// A student's own reset from the week list: deletes that week entirely (its Firestore document and transcript),
+// so it shows as not started and can be taken again. Returns the student's remaining sessions.
+app.post("/api/sessions/:id/delete", handler(async (req, res) => {
+  const s = await getSession(req);
+  await store.remove(s.id);
+  // The mirror may be a separate database (local storage); wait for it so the week is gone before the reply.
+  if (transcripts) await transcripts.remove(s, req.user).catch((error) => console.error("TRANSCRIPT_REMOVE_FAILED", error.message));
+  if (audio) await audio.clear(s, req.user).catch((error) => console.error("AUDIO_CLEAR_FAILED", error.message));
+  const sessions = await store.list(req.user.uid, studentKey(req.user));
+  res.json(sessions.map(publicSession).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
 }));
 // Resets every conversation of the signed-in student (local development storage only), including the transcript mirror.
 app.post("/api/dev/reset-all", handler(async (req, res) => {
   if (!local) throw Object.assign(Error("FORBIDDEN"), { status: 403 });
   for (const s of await store.list(req.user.uid, studentKey(req.user)))
-    if (s.mode === "conversation") unmirror(await store.mutate(s.id, resetConversation), req.user);
+    if (s.mode === "conversation") await unmirror(await store.mutate(s.id, resetConversation), req.user);
   const sessions = await store.list(req.user.uid, studentKey(req.user));
   res.json(sessions.map(publicSession).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
 }));
@@ -402,6 +432,6 @@ app.post(
 // On Vercel the app is served by api/index.js; locally `npm run server` listens on loopback.
 if (!process.env.VERCEL)
   app.listen(process.env.PORT || 3001, "127.0.0.1", () =>
-    console.log(`Review API on http://127.0.0.1:${process.env.PORT || 3001} (${local ? "local storage" : `Firestore ${process.env.FIREBASE_PROJECT_ID}`}, real OpenAI; transcripts → ${transcripts ? `Firestore ${transcripts.projectId}` : "not mirrored"})`),
+    console.log(`Review API on http://127.0.0.1:${process.env.PORT || 3001} (${local ? "local storage" : `Firestore ${process.env.FIREBASE_PROJECT_ID}`}, real OpenAI; transcripts → ${transcripts ? `Firestore ${transcripts.projectId}/${process.env.FIRESTORE_DATABASE_ID || "(default)"}` : "not mirrored"})`),
   );
 export default app;
