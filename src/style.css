@@ -553,55 +553,6 @@ main {
   color: #8b9eae;
   flex-shrink: 0;
 }
-.review-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f3f7fc;
-  border: 1px solid #e3edf6;
-  border-radius: 10px;
-  padding: 24px;
-  margin-bottom: 22px;
-}
-.review-summary > div:first-child {
-  display: flex;
-  gap: 17px;
-  align-items: center;
-}
-.summary-icon {
-  background: #e4effb;
-  border-radius: 10px;
-  padding: 12px;
-  color: #5484b5;
-  display: flex;
-}
-.review-summary strong {
-  font-size: 14px;
-  font-weight: 500;
-}
-.review-summary p {
-  margin: 4px 0 0;
-  font-size: 11px;
-  color: #8393a4;
-}
-.summary-progress {
-  width: 140px;
-  text-align: right;
-  font-size: 10px;
-  color: #8ca0b5;
-}
-.summary-progress > div {
-  height: 4px;
-  background: #dce7f1;
-  margin-top: 9px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.summary-progress i {
-  display: block;
-  background: #5f91c5;
-  height: 100%;
-}
 .notice {
   display: flex;
   gap: 10px;
@@ -1343,19 +1294,6 @@ summary > span {
   .quiet-note {
     font-size: 10px;
   }
-  .review-summary {
-    padding: 18px;
-    gap: 12px;
-  }
-  .summary-progress {
-    width: 65px;
-  }
-  .summary-icon {
-    display: none;
-  }
-  .review-summary strong {
-    font-size: 12px;
-  }
   .week-row {
     gap: 13px;
     flex-wrap: wrap;
@@ -1475,8 +1413,6 @@ h1 { font-size: 35px; }
 .focus-section { border-top: 0; padding-top: 0; margin-top: 35px; gap: 45px; }
 .focus-section h2 { font-size: 22px; }
 .quiet-note { background: transparent; border: 0; padding: 12px 0; }
-.review-summary { background: #f8fafc; padding: 20px 23px; }
-.summary-icon { background: transparent; padding: 5px; }
 .week-number { border: 0; background: transparent; }
 .row-action { background: transparent; }
 .question-card { background: none; }
@@ -1662,9 +1598,6 @@ main {padding-top:26px;}
 /* Weekly review list: larger type and distinct status pills. */
 .reviews-page .eyebrow { font-size:12px; letter-spacing:.12em; }
 .reviews-page .lead { font-size:17px; color:#5f6f80; }
-.reviews-page .review-summary strong { font-size:16px; }
-.reviews-page .review-summary p { font-size:14px; color:#64778a; }
-.reviews-page .summary-progress span { font-size:13px; color:#526b83; font-weight:600; }
 .reviews-page .tabs button { font-size:15px; }
 .reviews-page .week-number { font-size:26px; }
 .reviews-page .week-number small { font-size:10px; }
@@ -1677,7 +1610,6 @@ main {padding-top:26px;}
 .reviews-page .status.done { color:#1d7148; background:#e2f3e9; }
 .reviews-page .status.progress { color:#94590a; background:#fdf0d8; }
 .reviews-page .status.progress i { background:#e09a1e; }
-.reviews-page .status.ready { color:#4b5d70; background:#edf1f5; }
 .reviews-page .status.none { color:#a0abb6; background:none; padding-left:0; }
 @media(max-width:600px) { .reviews-page .lead { font-size:15px; } .reviews-page .week-info h3 { font-size:16px; } .reviews-page .week-info p { font-size:13.5px; } .reviews-page .week-number { font-size:22px; } }
 
@@ -1699,6 +1631,14 @@ main {padding-top:26px;}
 .review-setup .setup-hint { font-size:14px; }
 @media(max-width:600px) { .review-setup .setup-list li { font-size:15px; } .review-setup h2 { font-size:20px; } }
 .reviews-page .status.locked { color:#7b8794; background:#f1f3f5; }
+/* Open weeks read as active (blue number, solid action); locked weeks fade back to gray. */
+.reviews-page .week-row:not(.unavailable) .week-number { color:#1f5d99; }
+.reviews-page .week-row:not(.unavailable) .week-info h3 { color:#14202d; }
+.reviews-page .week-row:not(.unavailable) .row-action { color:#0f5aa6; font-weight:600; }
+.reviews-page .status.ready { color:#1f5d99; background:#e5effa; }
+.reviews-page .status.ready i { background:#3b82c4; }
+.reviews-page .week-row.unavailable { opacity:.42; filter:grayscale(1); }
+.reviews-page .week-row.unavailable .week-info h3 { color:#6b7785; }
 .reviews-page .status svg { flex:none; }
 .conversation-meta { align-items:center; }
 .conversation-meta .setup-week-link { font-size:12px; letter-spacing:.08em; }

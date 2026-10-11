@@ -427,7 +427,6 @@ function App() {
       location.hash = "reviews";
     });
   }
-  const completed = sessions.filter((s) => s.status === "completed").length;
   const latest = (id) => sessions.find((s) => s.weekId === id);
   return (
     <div className="app-shell">
@@ -479,35 +478,6 @@ function App() {
                   "핵심 개념을 말로 풀어보세요. 자신의 생각을 설명하고, 배운 내용을 연결해 보세요.",
                 )}
               </p>
-              <div className="review-summary">
-                <div>
-                  <span className="summary-icon">
-                    <BookOpen size={23} />
-                  </span>
-                  <div>
-                    <strong>
-                      {t(
-                        "Your learning, in progress",
-                        "차근차근 쌓이는 나의 이해",
-                      )}
-                    </strong>
-                    <p>
-                      {t(
-                        `${completed} completed · 14 weekly conversations`,
-                        `${completed}개 완료 · 14개의 주차별 대화`,
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="summary-progress">
-                  <span>{completed} / 14</span>
-                  <div>
-                    <i
-                      style={{ width: `${Math.min(completed / 14, 1) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
               <div className="tabs">
                 {[
                   ["all", "All weeks", "전체 주차"],
