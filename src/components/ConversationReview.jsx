@@ -1,7 +1,11 @@
+import professorAvatar from '../assets/professor-avatar.png';
+import professorListening from '../assets/professor-listening.png';
+import professorSpeaking from '../assets/professor-speaking.png';
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Pause, Play, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { AudioArchive } from '../services/audio-archive';
 import { RealtimeConversation } from '../services/conversation-voice';
+import { joinClips } from '../services/speech-clip';
 import { repository } from '../services/api';
 import { reviewErrorMessage } from '../services/errors';
 import { splitQuestion, reviewProgress } from '../services/question-split';
@@ -10,8 +14,13 @@ import { weekQuestions } from '../../content/weeks/index.js';
 export default function ConversationReview({ session, deviceId, onUpdate, onComplete, onLeave }) {
   const t = (en) => en;
   const audioFailed = useRef(false);
-  const current = useRef(session), pending = useRef(new Map()), voice = useRef(), timer = useRef(), queue = useRef(Promise.resolve()), url = useRef(''), mounted = useRef(true), stage = useRef();
+  const current = useRef(session), pending = useRef(new Map()), voice = useRef(), timer = useRef(), queue = useRef(Promise.resolve()), url = useRef(''), clips = useRef([]), mounted = useRef(true), stage = useRef();
   const [audioError, setAudioError] = useState(''), [messages, setMessages] = useState(session.messages || []), [state, setState] = useState('connecting'), [error, setError] = useState(''), [saved, setSaved] = useState(true), [busy, setBusy] = useState(false), [recording, setRecording] = useState(''), [bars, setBars] = useState(Array(48).fill(0)), [signal, setSignal] = useState('idle');
+  const avatarSrc = state === 'listening' ? professorListening : state === 'speaking' ? professorSpeaking : professorAvatar;
+  useEffect(() => {
+    // Fetch all expressions up front so turn changes do not wait for a new image download.
+    [professorAvatar, professorListening, professorSpeaking].forEach(src => { const image = new Image(); image.src = src; });
+  }, []);
   function flush() {
     clearTimeout(timer.current); timer.current = null;
     const task = queue.current.catch(() => {}).then(async () => {
@@ -32,9 +41,18 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
     setMessages(list); setSaved(false);
     if (!timer.current) timer.current = setTimeout(() => { timer.current = null; flush().catch(() => setError(t('Your conversation has not been saved yet. Retry saving before leaving.', '대화가 아직 저장되지 않았습니다. 나가기 전에 저장을 다시 시도해 주세요.'))); }, 1500);
   }
+  // "Your answer" plays everything the student has said so far: each pause adds its clip, kept across reconnects.
+  async function showClips(list) {
+    clips.current = list;
+    const joined = await joinClips(list).catch(() => list.at(-1));
+    if (!mounted.current || clips.current !== list || !joined) return;
+    if (url.current) URL.revokeObjectURL(url.current);
+    url.current = URL.createObjectURL(joined);
+    setRecording(url.current);
+  }
   async function connect() {
     await voice.current?.archive?.finish(); voice.current?.close(); setError(''); setState('connecting');
-    const v = new RealtimeConversation({ deviceId, onInput: (level, status) => { if (voice.current !== v) return; setSignal(status); setBars(old => status === 'idle' ? Array(48).fill(0) : [...old.slice(1), level]); }, onRecording: blob => { if (url.current) URL.revokeObjectURL(url.current); url.current = blob ? URL.createObjectURL(blob) : ''; setRecording(url.current); }, onRecordingError: () => setError(t('Audio playback is unavailable in this browser. Your transcript will still be saved.', '이 브라우저에서 녹음 재생을 사용할 수 없습니다. 대화 기록은 계속 저장됩니다.')) });
+    const v = new RealtimeConversation({ deviceId, onInput: (level, status) => { if (voice.current !== v) return; setSignal(status); setBars(old => status === 'idle' ? Array(48).fill(0) : [...old.slice(1), level]); }, onRecording: blob => { if (blob && voice.current === v) showClips([...clips.current, blob]); }, onRecordingError: () => setError(t('Audio playback is unavailable in this browser. Your transcript will still be saved.', '이 브라우저에서 녹음 재생을 사용할 수 없습니다. 대화 기록은 계속 저장됩니다.')) });
     if (current.current.audioConsent) v.archive = new AudioArchive({
       upload: (blob, startedAt) => repository.uploadAudio(current.current, blob, startedAt),
       onError: () => { audioFailed.current = true; if (mounted.current) setAudioError('Some voice recordings could not be saved. Your transcript can still be saved.'); },
@@ -59,7 +77,7 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
     clearTimeout(timer.current); timer.current = null; pending.current.clear();
     await queue.current.catch(() => {});
     current.current = await repository.reset(current.current);
-    setMessages([]); setSaved(true); setAudioError(''); audioFailed.current = false; setRecording(''); onUpdate(current.current);
+    setMessages([]); setSaved(true); setAudioError(''); audioFailed.current = false; clips.current = []; if (url.current) URL.revokeObjectURL(url.current); url.current = ''; setRecording(''); onUpdate(current.current);
   }
   // Restart: clear, then reconnect so the opening plays again.
   function reset() {
@@ -84,50 +102,69 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
   const micIssue = state === 'listening' && (signal === 'muted' || signal === 'disconnected');
   const level = Math.min(1, (bars.at(-1) + bars.at(-2) + bars.at(-3)) / 3 * 1.6);
   return <div className="continuous-conversation">
-    <div className="conversation-meta"><button className="setup-week-link" disabled={busy} onClick={back} aria-label={t('Back to all weekly reviews', '전체 주차별 리뷰로 돌아가기')} title={t('All weekly reviews', '전체 주차별 리뷰')}><span className="setup-week-arrow"><ChevronLeft size={15} /></span><span>WEEK {String(session.weekId).padStart(2,'0')}</span></button>{progress && <span className="question-count" aria-live="polite">{progress.done ? t('All questions done') : t(`Question ${progress.current} of ${progress.total}`)}</span>}<button className="restart-control" disabled={busy} onClick={reset}><RotateCcw size={15}/>{t('Restart', '처음부터 다시 시작')}</button></div>
+    <div className="conversation-meta"><button className="setup-week-link" disabled={busy} onClick={back} aria-label={t('Back to all weekly reviews', '전체 주차별 리뷰로 돌아가기')} title={t('All weekly reviews', '전체 주차별 리뷰')}><span className="setup-week-arrow"><ChevronLeft size={15} /></span><span>WEEK {String(session.weekId).padStart(2,'0')}</span></button></div>
+    <div className="conversation-room">
     <div className="agent-surface">
-    <section className="agent-card" ref={stage}>{agent ? <>{lead && <p className="agent-lead">{lead}</p>}{question && <h1 className={`agent-question${question.length > 110 ? ' long' : ''}`}>{question}</h1>}{question && tail && <p className="agent-tail">{tail}</p>}</> : <h1 className="agent-question">{t('Your conversation is about to begin.', '곧 대화가 시작됩니다.')}</h1>}</section>
-    </div>
-    <section className={`conversation-console is-${state}`} aria-label="Conversation controls">
-      <div className="console-status">
-        <div className={`live-orb console-orb is-${micIssue ? 'warning' : state}`} style={{ '--level': state === 'listening' ? level : 0 }} role="meter" aria-label="Microphone input level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={state === 'listening' ? Math.round(level * 100) : 0}>
-          <span className="orb-halo"/><span className="orb-ring"/><span className="orb-ring"/><span className="orb-sphere"><i/><i/><i/></span>
+      <aside className="companion-presence" aria-label="Your AI learning companion">
+        <div className={`live-orb companion-portrait professor-avatar is-${micIssue ? 'warning' : state}`} style={{ '--level': state === 'listening' ? level : 0 }} role="meter" aria-label="Microphone input level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={state === 'listening' ? Math.round(level * 100) : 0}>
+          <span className="orb-halo" aria-hidden="true"/><span className="orb-ring" aria-hidden="true"/><span className="orb-ring" aria-hidden="true"/><img className="professor-face" src={avatarSrc} alt="" aria-hidden="true" draggable="false" />
         </div>
-        <div className="console-copy">
+        <div className="companion-status">
           <p className={`voice-status is-${micIssue ? 'warning' : state}`} role="status">{micIssue ? 'Check your microphone' : labels[state]}</p>
-          <small>{state === 'speaking' ? 'Listen, then share your thoughts.' : state === 'listening' && !micIssue ? 'Your microphone is on. Take your time.' : state === 'paused' ? 'Microphone off. Resume when you’re ready.' : state === 'connecting' ? 'Getting your conversation ready.' : state === 'thinking' ? 'Preparing a response…' : 'Reconnect to continue your conversation.'}</small>
         </div>
+        <div className={`conversation-console is-${state}`} role="group" aria-label="Conversation controls">
+          <div className="console-actions">
+            {state === 'error'
+              ? <button className="conversation-action" disabled={busy} onClick={() => action(connect)}><RefreshCw size={17}/>Reconnect</button>
+              : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
+            {/* End appears once every question is done (the agent has said the closing line); weeks without a fixed question set keep it. */}
+            {(!progress || progress.done) && <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { setRecording(''); await voice.current.drain(); await voice.current.archive?.finish(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done, audioFailed.current); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>}
+          </div>
+        </div>
+        <button className="restart-control" disabled={busy} onClick={reset}><RotateCcw size={13}/>{t('Restart', '처음부터 다시 시작')}</button>
+      </aside>
+      <div className="question-space">
+      {progress && <span className="question-count" aria-live="polite">{progress.done ? t('All questions done') : t(`Question ${progress.current} of ${progress.total}`)}</span>}
+    <section className="agent-card" ref={stage}>{agent ? <>{lead && <p className="agent-lead">{lead}</p>}{question && <h1 className={`agent-question${question.length > 110 ? ' long' : ''}`}>{question}</h1>}{question && tail && <p className="agent-tail">{tail}</p>}</> : <h1 className="agent-question">{t('Your conversation is about to begin.', '곧 대화가 시작됩니다.')}</h1>}</section>
       </div>
-      <div className="console-actions">
-        {state === 'error'
-          ? <button className="conversation-action" disabled={busy} onClick={() => action(connect)}><RefreshCw size={17}/>Reconnect</button>
-          : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
-        {/* End appears once every question is done (the agent has said the closing line); weeks without a fixed question set keep it. */}
-        {(!progress || progress.done) && <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { setRecording(''); await voice.current.drain(); await voice.current.archive?.finish(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done, audioFailed.current); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>}
-      </div>
-      {state === 'paused' && recording && <div className="console-playback"><RecordingAudio src={recording}/></div>}
-    </section>
+    </div>
+    {state === 'paused' && recording && <AnswerPlayback src={recording}/>}
+    </div>
     {audioError && <div role="status" className="notice">{audioError}</div>}
     {error && <div role="alert" className="notice">{error} {!saved && <button onClick={() => action(flush)}>{t('Retry saving', '저장 재시도')}</button>}</div>}
-    <details className="conversation-history"><summary>{t('Conversation transcript', '대화 기록')} <small>{saved ? t('Saved', '저장됨') : t('Saving…', '저장 중…')}</small></summary>{messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === 'student' ? t('You', '나') : t('Agent', '학습 에이전트')}</strong><p>{m.text}</p>{!m.complete && <small>{t('Transcription in progress or interrupted', '음성 인식 중이거나 중단된 기록')}</small>}{m.interrupted && <small>{t('Interrupted', '발화 중단됨')}</small>}</div>)}</details>
+    <details className="conversation-history"><summary>{t('Conversation transcript', '대화 기록')}</summary>{messages.filter(m => m.text).map(m => <div className="transcript-turn" key={m.id}><strong>{m.role === 'student' ? t('You', '나') : t('Agent', '학습 에이전트')}</strong><p>{m.text}</p>{!m.complete && <small>{t('Transcription in progress or interrupted', '음성 인식 중이거나 중단된 기록')}</small>}{m.interrupted && <small>{t('Interrupted', '발화 중단됨')}</small>}</div>)}</details>
   </div>;
 }
 
-// MediaRecorder WebM files carry no duration, so Chrome shows a broken timeline (Infinity / no seeking).
-// Seeking far past the end once forces the browser to scan the file and learn the real duration.
-export function RecordingAudio({ src }) {
+// Compact "your answer" playback shown under Resume while paused.
+// MediaRecorder WebM files carry no duration, so seeking far past the end once makes the browser learn it.
+export function AnswerPlayback({ src }) {
   const ref = useRef();
+  const [playing, setPlaying] = useState(false), [time, setTime] = useState(0), [duration, setDuration] = useState(0);
   useEffect(() => {
     const audio = ref.current;
     if (!audio) return;
+    setPlaying(false); setTime(0); setDuration(0);
+    const known = () => { if (Number.isFinite(audio.duration)) setDuration(audio.duration); };
     const fix = () => {
-      if (Number.isFinite(audio.duration)) return;
-      const reset = () => { if (!Number.isFinite(audio.duration)) return; audio.removeEventListener('durationchange', reset); audio.currentTime = 0; };
+      if (Number.isFinite(audio.duration)) return known();
+      const reset = () => { if (!Number.isFinite(audio.duration)) return; audio.removeEventListener('durationchange', reset); audio.currentTime = 0; known(); };
       audio.addEventListener('durationchange', reset);
       audio.currentTime = 1e101;
     };
-    audio.addEventListener('loadedmetadata', fix);
-    return () => audio.removeEventListener('loadedmetadata', fix);
+    const tick = () => setTime(audio.currentTime), end = () => { setPlaying(false); setTime(0); };
+    audio.addEventListener('loadedmetadata', fix); audio.addEventListener('timeupdate', tick); audio.addEventListener('ended', end);
+    return () => { audio.pause(); audio.removeEventListener('loadedmetadata', fix); audio.removeEventListener('timeupdate', tick); audio.removeEventListener('ended', end); };
   }, [src]);
-  return <audio ref={ref} controls preload="metadata" src={src} />;
+  const toggle = () => { const a = ref.current; if (a.paused) a.play().then(() => setPlaying(true)).catch(() => {}); else { a.pause(); setPlaying(false); } };
+  const seek = (e) => { const a = ref.current, box = e.currentTarget.getBoundingClientRect(); if (!duration) return; a.currentTime = Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)) * duration; setTime(a.currentTime); };
+  const clock = (v) => `${Math.floor(v / 60)}:${String(Math.floor(v % 60)).padStart(2, '0')}`;
+  const progress = duration ? Math.min(100, (time / duration) * 100) : 0;
+  return <div className="answer-replay">
+    <button type="button" className="answer-replay-play" onClick={toggle} aria-label={playing ? 'Pause your answer' : 'Play your answer'}>{playing ? <Pause size={15}/> : <Play size={15}/>}</button>
+    <span className="answer-replay-label">Your answer so far</span>
+    <div className="answer-replay-track" onClick={seek} role="slider" aria-label="Playback position" aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(time)}><i style={{ width: `${progress}%` }}/></div>
+    {duration > 0 && <small>{clock(time)} / {clock(duration)}</small>}
+    <audio ref={ref} preload="metadata" src={src} />
+  </div>;
 }

@@ -40,6 +40,24 @@ export async function speechClip(blob, segments) {
   }
 }
 
+// Joins the clips from each pause into one recording of everything the student has said so far.
+export async function joinClips(blobs) {
+  if (blobs.length < 2) return blobs[0] || null;
+  const Context = window.AudioContext || window.webkitAudioContext;
+  const context = new Context();
+  try {
+    const parts = [];
+    for (const blob of blobs) parts.push((await context.decodeAudioData(await blob.arrayBuffer())).getChannelData(0));
+    const rate = context.sampleRate, gap = Math.round(GAP * rate);
+    const samples = new Float32Array(parts.reduce((n, p) => n + p.length, 0) + gap * (parts.length - 1));
+    let offset = 0;
+    for (const part of parts) { samples.set(part, offset); offset += part.length + gap; }
+    return wav(samples, rate);
+  } finally {
+    context.close().catch(() => {});
+  }
+}
+
 function wav(samples, rate) {
   const buffer = new ArrayBuffer(44 + samples.length * 2), view = new DataView(buffer);
   const text = (at, s) => [...s].forEach((c, i) => view.setUint8(at + i, c.charCodeAt(0)));

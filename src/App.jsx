@@ -1067,11 +1067,6 @@ function App() {
               </div>
             </div>
           )}
-          <footer>
-            <span>
-              ID40018 <i /> Data-Driven AI Service Design
-            </span>
-          </footer>
         </main>
       </div>
       {exitOpen && (

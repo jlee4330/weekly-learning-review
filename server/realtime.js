@@ -16,7 +16,7 @@ export function realtimeSession(language = "en", session) {
         noise_reduction: conversationConfig.noiseReduction,
       },
       // Keep the default speed: changing it time-stretches the generated audio and can make it crackle.
-      output: { voice: "marin" },
+      output: { voice: "ash" },
     },
   };
 }
