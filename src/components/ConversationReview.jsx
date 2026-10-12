@@ -1,6 +1,3 @@
-import professorAvatar from '../assets/professor-avatar.png';
-import professorListening from '../assets/professor-listening.png';
-import professorSpeaking from '../assets/professor-speaking.png';
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Pause, Play, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { AudioArchive } from '../services/audio-archive';
@@ -16,11 +13,6 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
   const audioFailed = useRef(false);
   const current = useRef(session), pending = useRef(new Map()), voice = useRef(), timer = useRef(), queue = useRef(Promise.resolve()), url = useRef(''), clips = useRef([]), mounted = useRef(true), stage = useRef();
   const [audioError, setAudioError] = useState(''), [messages, setMessages] = useState(session.messages || []), [state, setState] = useState('connecting'), [error, setError] = useState(''), [saved, setSaved] = useState(true), [busy, setBusy] = useState(false), [recording, setRecording] = useState(''), [bars, setBars] = useState(Array(48).fill(0)), [signal, setSignal] = useState('idle');
-  const avatarSrc = state === 'listening' ? professorListening : state === 'speaking' ? professorSpeaking : professorAvatar;
-  useEffect(() => {
-    // Fetch all expressions up front so turn changes do not wait for a new image download.
-    [professorAvatar, professorListening, professorSpeaking].forEach(src => { const image = new Image(); image.src = src; });
-  }, []);
   function flush() {
     clearTimeout(timer.current); timer.current = null;
     const task = queue.current.catch(() => {}).then(async () => {
@@ -106,8 +98,8 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
     <div className="conversation-room">
     <div className="agent-surface">
       <aside className="companion-presence" aria-label="Your AI learning companion">
-        <div className={`live-orb companion-portrait professor-avatar is-${micIssue ? 'warning' : state}`} style={{ '--level': state === 'listening' ? level : 0 }} role="meter" aria-label="Microphone input level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={state === 'listening' ? Math.round(level * 100) : 0}>
-          <span className="orb-halo" aria-hidden="true"/><span className="orb-ring" aria-hidden="true"/><span className="orb-ring" aria-hidden="true"/><img className="professor-face" src={avatarSrc} alt="" aria-hidden="true" draggable="false" />
+        <div className={`live-orb companion-orb is-${micIssue ? 'warning' : state}`} style={{ '--level': state === 'listening' ? level : 0 }} role="meter" aria-label="Microphone input level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={state === 'listening' ? Math.round(level * 100) : 0}>
+          <span className="orb-halo" aria-hidden="true"/><span className="orb-ring" aria-hidden="true"/><span className="orb-ring" aria-hidden="true"/><span className="orb-sphere" aria-hidden="true"><i/><i/><i/></span>
         </div>
         <div className="companion-status">
           <p className={`voice-status is-${micIssue ? 'warning' : state}`} role="status">{micIssue ? 'Check your microphone' : labels[state]}</p>

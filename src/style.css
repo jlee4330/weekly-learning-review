@@ -1713,17 +1713,6 @@ main {padding-top:26px;}
 .audio-consent input { width: 18px; height: 18px; margin-top: 3px; flex-shrink: 0; }
 .audio-consent small { display: block; margin-top: 5px; color: #68716e; font-size: 12px; }
 
-/* The archive avatar uses a transparent figurine head; the existing ring colors retain turn status. */
-.professor-face { position:relative; z-index:1; display:block; width:100%; height:100%; object-fit:contain; transform-origin:50% 78%; filter:drop-shadow(0 3px 3px rgba(35,48,70,.12)); pointer-events:none; }
-.professor-avatar.is-listening .professor-face { transform:scale(calc(1 + var(--level) * .06)); transition:transform 120ms linear; }
-.professor-avatar.is-speaking .professor-face { animation:professor-speak 1.8s ease-in-out infinite; }
-.professor-avatar.is-thinking .professor-face { animation:professor-think 3.5s ease-in-out infinite; }
-.professor-avatar.is-connecting .professor-face { animation:professor-speak 3s ease-in-out infinite; }
-.professor-avatar.is-paused .professor-face { opacity:.75; }
-@keyframes professor-speak { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-2px) rotate(2deg); } }
-@keyframes professor-think { 0%,100% { transform:rotate(0); } 50% { transform:rotate(-5deg); } }
-@media (prefers-reduced-motion:reduce) { .professor-avatar .professor-face { animation:none; transform:none; transition:none; } }
-
 /* Conversation room: a visible companion, a clear question, and quiet controls. */
 .continuous-conversation { max-width:1040px; }
 .continuous-conversation .conversation-meta { padding-bottom:22px; border-bottom:0; gap:18px; }
@@ -1733,10 +1722,9 @@ main {padding-top:26px;}
 .conversation-room { background:transparent; }
 .conversation-room .agent-surface { display:grid; grid-template-columns:180px minmax(0,1fr); column-gap:40px; padding:8px 0 0; }
 .companion-presence { padding:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:14px; background:transparent; text-align:center; }
-.companion-presence .companion-portrait { width:140px; height:140px; flex-shrink:0; }
-.companion-portrait .orb-halo { inset:0; opacity:.3; }
-.companion-portrait .orb-ring { inset:20px; opacity:.12; }
-.companion-portrait .professor-face { filter:drop-shadow(0 8px 5px rgba(35,48,70,.12)); }
+.companion-presence .companion-orb { width:140px; height:140px; flex-shrink:0; }
+.companion-orb .orb-halo { inset:0; }
+.companion-orb .orb-ring, .companion-orb .orb-sphere { inset:14%; }
 .companion-status .voice-status { margin:0; font-size:14px; font-weight:600; }
 .question-space { min-width:0; padding:4px 0 18px 40px; border-left:1px solid #e7ecf1; }
 .continuous-conversation .conversation-room .agent-card { height:270px; padding:0 8px 8px 0; }
@@ -1768,7 +1756,7 @@ main {padding-top:26px;}
 .conversation-history .transcript-turn small { font-size:13px; }
 @media(max-width:760px) {
  .conversation-room .agent-surface { grid-template-columns:150px minmax(0,1fr); column-gap:28px; }
- .companion-presence .companion-portrait { width:116px; height:116px; }
+ .companion-presence .companion-orb { width:116px; height:116px; }
  .question-space { padding:4px 0 20px 28px; }
 }
 @media(max-width:580px) {
@@ -1781,7 +1769,7 @@ main {padding-top:26px;}
  .conversation-room .agent-surface { display:block; }
  .companion-presence { display:grid; grid-template-columns:auto minmax(0,1fr) auto; grid-template-areas:"face status actions" "restart restart restart"; align-items:center; gap:10px 14px; padding:0 0 18px; border-bottom:1px solid #e7ecf1; text-align:left; }
  .companion-presence .restart-control { grid-area:restart; justify-self:end; margin:0; }
- .companion-presence .companion-portrait { grid-area:face; width:64px; height:64px; }
+ .companion-presence .companion-orb { grid-area:face; width:64px; height:64px; }
  .companion-status { grid-area:status; }
  .conversation-room .conversation-console { display:contents; }
  .conversation-room .console-actions { grid-area:actions; flex-direction:row; width:auto; }
