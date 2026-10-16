@@ -99,6 +99,7 @@ export async function createCloudStore(courseId) {
   const idOf = (doc) => `${doc.ref.parent.parent.id}~${doc.id}`;
   return {
     persistsMessages: false,
+    dashboardLateStudents: async () => (await db.doc("dashboardMetadata/lateReviews").get()).data()?.weeks || {},
     // Only consulted when REQUIRE_ENROLLMENT=true.
     enrolled: async uid => (await db.doc(`courses/${courseId}/members/${uid}`).get()).exists,
     get: async id => (sessionKey(id) && sessionWeek(id) ? unpackSession(id, (await ref(id).get()).data(), courseId) : undefined),

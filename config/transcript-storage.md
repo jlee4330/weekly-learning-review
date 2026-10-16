@@ -3,6 +3,10 @@
 Target project: **id40018ddasd**. Firestore database ID: **id40018** (`nam5`). Public web configuration: `review-firebase.json`.
 Authentication remains on **id400018-ddasd** (`course-auth.json`), so existing students use their course accounts. The backend verifies that project's identity token, then writes to the new project using server credentials. The new project does not need a duplicate student account for this arrangement.
 
+## Latest status — 2026-10-17 (KST)
+
+Existing records have now been copied to `id40018ddasd/id40018`: 32 Week 1 sessions and 25 Week 2 sessions (24 completed Week 2 transcripts). The source project was preserved. The private `.env.vercel` has been refreshed and its Firestore write/read/delete and Storage upload/download/delete checks passed. Hosted environment settings and production deployment still require cutover. See [vercel-cutover.md](vercel-cutover.md) for migration results, deployment steps, and late-write synchronization. The older sections below describe historical setup; the current document layout is `students/{studentId}/weeks/Week{N}`.
+
 ## Documents
 
 - `students/{verifiedFirebaseUid}` — UID, email, student ID derived from the email, last activity.

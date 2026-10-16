@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { summarize, dashboardKeyMatches } from "../server/dashboard.js";
+import { summarize, dashboardKeyMatches, dashboardData } from "../server/dashboard.js";
 
 const at = (s) => new Date(Date.UTC(2026, 9, 7, 12, 0, s)).toISOString();
 const content = {
@@ -70,4 +70,18 @@ test("dashboard key is checked against its hash", () => {
   assert.equal(dashboardKeyMatches("b".repeat(32), hash), false);
   assert.equal(dashboardKeyMatches(undefined, hash), false);
   assert.equal(dashboardKeyMatches("short", createHash("sha256").update("short").digest("hex")), false);
+});
+
+
+test("persisted late flag survives a completed submission and reset", async () => {
+  const lateStudentsByWeek = { 2: ["kim"] };
+  let records = [];
+  const store = { list: async () => records, dashboardLateStudents: async () => lateStudentsByWeek };
+  assert.deepEqual((await dashboardData(store)).lateStudentsByWeek, lateStudentsByWeek);
+  records = [session([["student", "My submitted answer"]], { id: "kim~Week2", weekId: 2, mode: "conversation", status: "completed" })];
+  const saved = (await dashboardData(store)).sessions[0];
+  assert.equal(saved.status, "completed");
+  assert.equal(saved.late, true);
+  records = [];
+  assert.deepEqual((await dashboardData(store)).lateStudentsByWeek, lateStudentsByWeek);
 });

@@ -118,6 +118,10 @@ export function summarize(session, content = contentFor(session.weekId)) {
 }
 
 export async function dashboardData(store) {
-  const sessions = (await store.list()).filter((s) => s.mode === "conversation");
-  return { generatedAt: new Date().toISOString(), sessions: sessions.map((s) => summarize(s)) };
+  const [all, lateStudentsByWeek] = await Promise.all([store.list(), store.dashboardLateStudents?.() || {}]);
+  const sessions = all.filter((s) => s.mode === "conversation").map(s => {
+    const summary = summarize(s);
+    return { ...summary, late: (lateStudentsByWeek[s.weekId] || []).includes(summary.studentId) };
+  });
+  return { generatedAt: new Date().toISOString(), sessions, lateStudentsByWeek };
 }

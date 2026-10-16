@@ -18,12 +18,11 @@
 .dash-table th, .dash-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
 .dash-table th { font-size: 12px; font-weight: 600; color: var(--muted); background: #f8fafc; }
 .dash-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.dash-table tbody tr { cursor: pointer; }
-.dash-table tbody tr:hover, .dash-table tbody tr:focus-visible { background: #f2f6fa; outline: none; }
 .dash-table tbody tr:last-child td { border-bottom: 0; }
 .dash-status { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
 .dash-status.done { color: #1a7f37; }
 .dash-status.early { color: #b54708; }
+.dash-status.late { color: #b42318; font-weight: 600; }
 .dash-status small { margin-left: 4px; color: var(--muted); }
 .dash-muted { color: #aab3bd; }
 .dash-back { padding: 6px 12px; }
@@ -54,3 +53,19 @@
   .dash-transcript li { max-width: 100%; }
 }
 .dash-transcript li.dash-idle { max-width: 100%; text-align: center; color: var(--muted); font-size: 12px; padding: 4px; margin: 12px 0 4px; border-top: 1px dashed var(--line); border-radius: 0; }
+
+.dash-overview { margin-bottom: 28px; }
+.dash-overview h2 { font-size: 17px; margin-bottom: 8px; }
+.dash-overview p { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+.dash-overview tbody tr { cursor: default; }
+.dash-student-link { border: 0; background: none; color: var(--blue); padding: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+.dash-average { display: block; margin-top: 6px; color: #354454; font-size: 13px; font-weight: 500; }
+
+.dash-table td.dash-week-cell { padding: 0; }
+.dash-week-link { display: block; width: 100%; padding: 14px; border: 0; border-radius: 0; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.dash-week-link:hover { background: #eaf3fd; }
+.dash-week-link:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+.dash-table .dash-number { width: 1%; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.dash-week-link .dash-status + .dash-status { margin-left: 10px; }

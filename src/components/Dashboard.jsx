@@ -5,6 +5,10 @@ import "../dashboard.css";
 // Instructor-only dashboard, opened by the secret link /#/dash/<DASHBOARD_KEY>.
 // The key stays in the URL fragment (never sent as part of a request URL) and goes to the API as a header.
 
+// Instructor confirmed Week 2's deadline has passed (2026-10-17).
+// Missing records are marked in the dashboard; persisted late flags survive later submissions.
+const closedWeeks = [2];
+
 const dur = (ms) => {
   if (ms == null) return "–";
   const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
@@ -23,6 +27,10 @@ const stage = (s) => {
   return { kind: "early", label: `Q${p.reached}에서 종료` };
 };
 const ICON = { done: CheckCircle2, early: CircleAlert, open: CircleDashed };
+
+function LateBadge() {
+  return <span className="dash-status late" title="마감 후 기록 미제출로 확인됨"><CircleAlert size={14} />Late</span>;
+}
 
 function Progress({ s }) {
   const { kind, label } = stage(s);
@@ -63,8 +71,8 @@ function Transcript({ s }) {
   );
 }
 
-function StudentView({ id, sessions, onBack }) {
-  const mine = sessions.filter((s) => s.studentId === id).sort((a, b) => a.weekId - b.weekId);
+function StudentView({ id, sessions, week, onBack }) {
+  const mine = sessions.filter((s) => s.studentId === id && (!week || s.weekId === week)).sort((a, b) => a.weekId - b.weekId);
   return (
     <section className="dash-student">
       <button className="dash-back" onClick={onBack}><ArrowLeft size={16} /> 전체 목록</button>
@@ -74,6 +82,7 @@ function StudentView({ id, sessions, onBack }) {
           <header>
             <h3>Week {s.weekId}</h3>
             <Progress s={s} />
+            {s.late && <LateBadge />}
             <dl>
               <div><dt>소요 시간</dt><dd>{dur(s.talkMs)}</dd></div>
               <div><dt>세션 시간</dt><dd>{dur(s.sessionMs)}</dd></div>
@@ -103,8 +112,7 @@ function StudentView({ id, sessions, onBack }) {
 export default function Dashboard({ dashKey }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [week, setWeek] = useState("all");
-  const [show, setShow] = useState("all");
+  const [selectedWeek, setSelectedWeek] = useState(() => Number(location.hash.split("/")[4]) || null);
   const [student, setStudent] = useState(() => decodeURIComponent(location.hash.split("/")[3] || ""));
 
   useEffect(() => { (async () => {
@@ -125,20 +133,20 @@ export default function Dashboard({ dashKey }) {
     return () => meta.remove();
   }, []);
   // Keep the selected student in the fragment so a reload stays on the same page.
-  const open = (id) => {
+  const open = (id, week = null) => {
     setStudent(id);
-    history.replaceState(null, "", `#/dash/${dashKey}${id ? `/${encodeURIComponent(id)}` : ""}`);
+    setSelectedWeek(week);
+    history.replaceState(null, "", `#/dash/${dashKey}${id ? `/${encodeURIComponent(id)}${week ? `/${week}` : ""}` : ""}`);
     window.scrollTo(0, 0);
   };
 
   const sessions = data?.sessions || [];
-  const weeks = useMemo(() => [...new Set(sessions.map((s) => s.weekId))].sort((a, b) => a - b), [sessions]);
-  const inWeek = useMemo(() => sessions
-    .filter((s) => week === "all" || s.weekId === Number(week)), [sessions, week]);
-  const count = (kind) => inWeek.filter((s) => stage(s).kind === kind).length;
-  const rows = inWeek
-    .filter((s) => show === "all" || stage(s).kind === show)
-    .sort((a, b) => a.studentId.localeCompare(b.studentId) || a.weekId - b.weekId);
+  const weeks = useMemo(() => [...new Set([...closedWeeks, ...sessions.map((s) => s.weekId)])].sort((a, b) => a - b), [sessions]);
+  const weekTimes = useMemo(() => Object.fromEntries(weeks.map(w => {
+    const timed = sessions.filter(s => s.weekId === w && s.status === "completed" && Number.isFinite(s.talkMs) && s.talkMs >= 0);
+    return [w, { count: timed.length, average: timed.length ? timed.reduce((sum, s) => sum + s.talkMs, 0) / timed.length : null }];
+  })), [sessions, weeks]);
+  const students = useMemo(() => [...new Set(sessions.map((s) => s.studentId))].sort(), [sessions]);
 
   return (
     <main className="dash">
@@ -151,46 +159,26 @@ export default function Dashboard({ dashKey }) {
       {error && <p className="dash-error">{error}</p>}
       {!data && !error && <p className="dash-empty">불러오는 중…</p>}
       {data && (student ? (
-        <StudentView id={student} sessions={sessions} onBack={() => open("")} />
+        <StudentView id={student} sessions={sessions} week={selectedWeek} onBack={() => open("")} />
       ) : (
-        <>
-          <div className="dash-filters">
-            <div className="dash-seg" role="group" aria-label="진행 상태">
-              {[["all", "전체", inWeek.length], ["done", "끝까지 완료", count("done")], ["early", "중간 종료", count("early")], ["open", "진행 중", count("open")]]
-                .filter(([k, , n]) => k === "all" || n > 0)
-                .map(([k, label, n]) => (
-                  <button key={k} className={show === k ? "on" : ""} aria-pressed={show === k} onClick={() => setShow(k)}>{label} <small>{n}</small></button>
-                ))}
-            </div>
-            <select value={week} onChange={(e) => setWeek(e.target.value)} aria-label="주차">
-              <option value="all">전체 주차</option>
-              {weeks.map((w) => <option key={w} value={w}>Week {w}</option>)}
-            </select>
-          </div>
-          <div className="dash-table-wrap">
-            <table className="dash-table">
-              <thead>
-                <tr>
-                  <th>학생</th><th>주차</th><th>진행</th>
-                  <th className="num">세션 시간</th><th className="num">학생 발화</th><th>시작</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s) => (
-                  <tr key={s.id} onClick={() => open(s.studentId)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && open(s.studentId)}>
-                    <td><b>{s.studentId}</b></td>
-                    <td>Week {s.weekId}</td>
-                    <td><Progress s={s} /></td>
-                    <td className="num">{dur(s.sessionMs)}</td>
-                    <td className="num">{s.studentSentences}문장</td>
-                    <td>{when(s.createdAt)}</td>
-                  </tr>
-                ))}
-                {!rows.length && <tr><td colSpan={6} className="dash-empty">세션이 없습니다.</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </>
+            <section className="dash-overview" aria-label="학생별 주차 현황">
+              <div className="dash-table-wrap">
+                <table className="dash-table">
+                  <thead><tr><th scope="col" className="dash-number">번호</th><th scope="col">학생</th>{weeks.map(w => <th scope="col" key={w}>Week {w}<small className="dash-average">평균 대화 {dur(weekTimes[w].average)} · {weekTimes[w].count}건 기준</small></th>)}</tr></thead>
+                  <tbody>{students.map((id, index) => (
+                    <tr key={id}>
+                      <td className="dash-number">{index + 1}</td>
+                      <th scope="row"><button className="dash-student-link" onClick={() => open(id)}>{id}</button></th>
+                      {weeks.map(w => {
+                        const s = sessions.find(s => s.studentId === id && s.weekId === w);
+                        return <td key={w} className={s ? "dash-week-cell" : undefined}>{s ? <button className="dash-week-link" aria-label={`${id} Week ${w} 대화 기록 보기`} onClick={() => open(id, w)}><Progress s={s} />{s.late && <LateBadge />}<small className="dash-average">대화 시간 {dur(s.status === "completed" && Number.isFinite(s.talkMs) && s.talkMs >= 0 ? s.talkMs : null)}</small></button> : (closedWeeks.includes(w) || data.lateStudentsByWeek?.[w]?.includes(id)) ? <LateBadge /> : <span className="dash-muted">기록 없음</span>}</td>;
+                      })}
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </section>
+
       ))}
     </main>
   );
