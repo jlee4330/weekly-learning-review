@@ -159,7 +159,17 @@ export default function Dashboard({ dashKey }) {
     const timed = sessions.filter(s => s.weekId === w && s.status === "completed" && Number.isFinite(s.talkMs) && s.talkMs >= 0);
     return [w, { count: timed.length, average: timed.length ? timed.reduce((sum, s) => sum + s.talkMs, 0) / timed.length : null }];
   })), [sessions, weeks]);
-  const students = useMemo(() => [...new Set(sessions.map((s) => s.studentId))].sort(), [sessions]);
+  const students = useMemo(() => {
+    const completedWeeks = new Map();
+    for (const s of sessions) {
+      if (![1, 2].includes(s.weekId) || s.status !== "completed" || !s.progress.finished) continue;
+      if (!completedWeeks.has(s.studentId)) completedWeeks.set(s.studentId, new Set());
+      completedWeeks.get(s.studentId).add(s.weekId);
+    }
+    return [...new Set(sessions.map(s => s.studentId))].sort((a, b) =>
+      (completedWeeks.get(b)?.size || 0) - (completedWeeks.get(a)?.size || 0)
+      || a.localeCompare(b));
+  }, [sessions]);
 
   return (
     <main className="dash">
