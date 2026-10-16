@@ -23,6 +23,7 @@ const stage = (s) => {
   if (!p.total) return { kind: "open", label: "고정 질문 없음" };
   if (p.finished) return { kind: "done", label: `${p.total}/${p.total} 완료` };
   if (s.status !== "completed") return { kind: "open", label: `진행 중 · Q${p.reached || 1}` };
+  if (s.weekId === 1) return { kind: "early", label: `${p.answered}/${p.total} 완료` };
   if (!p.answered) return { kind: "early", label: "Q1 답변 전 종료" };
   return { kind: "early", label: `Q${p.reached}에서 종료` };
 };
@@ -38,7 +39,7 @@ function Progress({ s }) {
   return (
     <span className={`dash-status ${kind}`}>
       <Icon size={14} />{label}
-      {kind === "early" && s.progress.answered > 0 && <small>답변 {s.progress.answered}/{s.progress.total}</small>}
+      {kind === "early" && s.weekId !== 1 && s.progress.answered > 0 && <small>답변 {s.progress.answered}/{s.progress.total}</small>}
     </span>
   );
 }
