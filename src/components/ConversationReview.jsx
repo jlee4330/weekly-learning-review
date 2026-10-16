@@ -10,7 +10,7 @@ import { weekQuestions } from '../../content/weeks/index.js';
 
 export default function ConversationReview({ session, deviceId, onUpdate, onComplete, onLeave }) {
   const t = (en) => en;
-  const audioFailed = useRef(false);
+  const audioFailed = useRef(false), resetFailed = useRef(false), connectionGeneration = useRef(0);
   const current = useRef(session), pending = useRef(new Map()), voice = useRef(), timer = useRef(), queue = useRef(Promise.resolve()), url = useRef(''), clips = useRef([]), mounted = useRef(true), stage = useRef();
   const [audioError, setAudioError] = useState(''), [messages, setMessages] = useState(session.messages || []), [state, setState] = useState('connecting'), [error, setError] = useState(''), [saved, setSaved] = useState(true), [busy, setBusy] = useState(false), [recording, setRecording] = useState(''), [bars, setBars] = useState(Array(48).fill(0)), [signal, setSignal] = useState('idle');
   function flush() {
@@ -43,7 +43,13 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
     setRecording(url.current);
   }
   async function connect() {
-    await voice.current?.archive?.finish(); voice.current?.close(); setError(''); setState('connecting');
+    const generation = ++connectionGeneration.current;
+    const previous = voice.current;
+    voice.current = null;
+    previous?.close();
+    await previous?.archive?.finish();
+    if (!mounted.current || generation !== connectionGeneration.current) return;
+    setError(''); setState('connecting');
     const v = new RealtimeConversation({ deviceId, onInput: (level, status) => { if (voice.current !== v) return; setSignal(status); setBars(old => status === 'idle' ? Array(48).fill(0) : [...old.slice(1), level]); }, onRecording: blob => { if (blob && voice.current === v) showClips([...clips.current, blob]); }, onRecordingError: () => setError(t('Audio playback is unavailable in this browser. Your transcript will still be saved.', '이 브라우저에서 녹음 재생을 사용할 수 없습니다. 대화 기록은 계속 저장됩니다.')) });
     if (current.current.audioConsent) v.archive = new AudioArchive({
       upload: (blob, startedAt) => repository.uploadAudio(current.current, blob, startedAt),
@@ -57,19 +63,25 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
     mounted.current = true; connect();
     const warn = e => { if (pending.current.size) { e.preventDefault(); e.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
-    return () => { mounted.current = false; clearTimeout(timer.current); voice.current?.archive?.discard(); voice.current?.close(); if (url.current) URL.revokeObjectURL(url.current); window.removeEventListener('beforeunload', warn); flush().catch(() => {}); };
+    return () => { mounted.current = false; ++connectionGeneration.current; clearTimeout(timer.current); voice.current?.archive?.discard(); voice.current?.close(); if (url.current) URL.revokeObjectURL(url.current); window.removeEventListener('beforeunload', warn); flush().catch(() => {}); };
   }, []);
   async function action(fn) { setBusy(true); setError(''); try { await fn(); } catch(e) { setError(e.message === 'NO_STUDENT_SPEECH' ? t('Say a little about what you learned before requesting feedback.', '피드백을 받기 전에 배운 내용에 대해 조금 이야기해 주세요.') : reviewErrorMessage(e, session.language)); } finally { if (mounted.current) setBusy(false); } }
   // Stops the voice session, discards unsaved transcript updates and clears the stored conversation.
   async function clearConversation() {
+    ++connectionGeneration.current;
+    resetFailed.current = true;
+    setState('connecting'); setSignal('idle'); setBars(Array(48).fill(0));
     const previous = voice.current;
-    const discarded = previous?.archive?.discard();
-    previous?.close(); voice.current = null;
-    await discarded;
+    voice.current = null;
     clearTimeout(timer.current); timer.current = null; pending.current.clear();
+    const discarded = previous?.archive?.discard();
+    previous?.close();
+    await discarded;
     await queue.current.catch(() => {});
-    current.current = await repository.reset(current.current);
-    setMessages([]); setSaved(true); setAudioError(''); audioFailed.current = false; clips.current = []; if (url.current) URL.revokeObjectURL(url.current); url.current = ''; setRecording(''); onUpdate(current.current);
+    try { current.current = await repository.reset(current.current); }
+    catch (error) { setState('error'); throw Error('RESTART_FAILED'); }
+    resetFailed.current = false;
+    setMessages([]); setSaved(true); setAudioError(current.current.audioCleanupFailed ? 'The conversation restarted, but previous saved audio could not be deleted. Please contact the instructor.' : ''); audioFailed.current = false; clips.current = []; if (url.current) URL.revokeObjectURL(url.current); url.current = ''; setRecording(''); onUpdate(current.current);
   }
   // Restart: clear, then reconnect so the opening plays again.
   function reset() {
@@ -107,7 +119,7 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
         <div className={`conversation-console is-${state}`} role="group" aria-label="Conversation controls">
           <div className="console-actions">
             {state === 'error'
-              ? <button className="conversation-action" disabled={busy} onClick={() => action(connect)}><RefreshCw size={17}/>Reconnect</button>
+              ? <button className="conversation-action" disabled={busy} onClick={() => action(async () => { if (resetFailed.current) await clearConversation(); await connect(); })}><RefreshCw size={17}/>{resetFailed.current ? 'Retry restart' : 'Reconnect'}</button>
               : <button className="conversation-action" disabled={busy || state === 'connecting'} onClick={() => action(() => state === 'paused' ? voice.current.resume() : voice.current.pause())} aria-label={state === 'paused' ? 'Resume conversation' : 'Pause'}>{state === 'paused' ? <Play size={17}/> : <Pause size={17}/>}<span>{state === 'paused' ? 'Resume' : 'Pause'}</span></button>}
             {/* End appears once every question is done (the agent has said the closing line); weeks without a fixed question set keep it. */}
             {(!progress || progress.done) && <button className="conversation-action end" disabled={busy || state === 'connecting' || state === 'error'} onClick={() => action(async () => { setRecording(''); await voice.current.drain(); await voice.current.archive?.finish(); await flush(); const done = await repository.complete(current.current); voice.current.close(); onComplete(done, audioFailed.current); })} aria-label="End conversation"><X size={17}/><span>{busy ? 'Saving…' : 'End conversation'}</span></button>}

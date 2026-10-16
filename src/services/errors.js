@@ -1,5 +1,6 @@
 export function reviewErrorMessage(error, language = "en") {
   const messages = {
+    RESTART_FAILED: ["Restart could not finish. The microphone is stopped. Select Retry restart to clear the previous conversation before reconnecting.", "초기화를 완료하지 못해 마이크를 중지했습니다. 다시 시작을 재시도해 주세요."],
     VOICE_SESSION_AUTH_FAILED: ["OpenAI rejected the temporary voice session credential. Select Reconnect to request a new session.", "OpenAI가 임시 음성 세션 인증을 거부했습니다. 다시 연결하여 새 세션을 요청해 주세요."],
     VOICE_REQUEST_INVALID: ["OpenAI rejected the voice connection request (400). The connection configuration needs to be checked.", "OpenAI가 음성 연결 요청을 거부했습니다(400). 연결 설정을 확인해야 합니다."],
     VOICE_ACCESS_DENIED: ["This OpenAI project does not have permission to start this voice session. Check its API permissions.", "OpenAI 프로젝트의 음성 세션 접근 권한을 확인해 주세요."],

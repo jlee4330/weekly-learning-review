@@ -1,3 +1,4 @@
+import { resetConversation, restartConversation } from "./reset-conversation.js";
 import { verifyCourseLogin } from "./firebase-admin.js";
 import { weekContent } from "./course-content.js";
 import { createTranscriptStore, studentIdOf } from "./transcript-store.js";
@@ -215,16 +216,12 @@ app.post("/api/sessions/:id/messages", handler(async (req, res) => {
   if (store.persistsMessages !== false) await store.mutate(s.id, current => mergeMessages(current, messages));
   res.json({ ok: true });
 }));
-// TEMP: development reset — clears the transcript and any feedback so the week can be retried.
-function resetConversation(current) {
-  const { feedback, completedAt, evaluationLease, ...rest } = current;
-  return { ...rest, messages: [], status: "in_progress", evaluationStatus: "not_started", updatedAt: new Date().toISOString() };
-}
 app.post("/api/sessions/:id/reset", handler(async (req, res) => {
   const s = await getSession(req);
   if (s.mode !== "conversation") throw Error("NOT_A_CONVERSATION");
-  const reset = await store.mutate(s.id, resetConversation);
-  await unmirror(reset, req.user);
+  const reset = await restartConversation({ store, transcripts, audio, session: s, user: req.user,
+    onAudioError: error => console.error("AUDIO_CLEAR_FAILED", error.code || "UNKNOWN"),
+  });
   res.json(publicSession(reset));
 }));
 // A student's own reset from the week list: deletes that week entirely (its Firestore document and transcript),
