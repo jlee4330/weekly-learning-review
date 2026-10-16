@@ -59,3 +59,28 @@ test('student overview shows both weeks and opens the saved Week 2 transcript', 
   await page.getByRole('button', { name: '전체 목록' }).click();
   await expect(overview).toBeVisible();
 });
+
+test('refresh updates the selected transcript and preserves data on failure', async ({ page }) => {
+  let text = 'Original answer';
+  let fail = false;
+  await page.route('**/api/dashboard', route => route.fulfill(fail ? { status: 503 } : { json: {
+    generatedAt: '2026-10-17T00:00:00Z',
+    sessions: [{ id: 'a~Week2', studentId: 'a', weekId: 2, status: 'completed',
+      progress: { total: 0, perQuestion: [] }, transcript: [{ role: 'student', text }] }],
+  } }));
+  await page.goto('/#/dash/test-dashboard-key/a/2');
+  await expect(page.getByText('Original answer', { exact: true })).toBeVisible();
+  text = 'Updated answer';
+  await page.getByRole('button', { name: '새로고침', exact: true }).click();
+  await expect(page.getByText('Updated answer', { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/a\/2$/);
+  fail = true;
+  await page.getByRole('button', { name: '새로고침', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('기존 데이터를 표시하고 있습니다.');
+  await expect(page.getByText('Updated answer', { exact: true })).toBeVisible();
+  fail = false;
+  text = 'Recovered answer';
+  await page.getByRole('button', { name: '새로고침', exact: true }).click();
+  await expect(page.getByText('Recovered answer', { exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});

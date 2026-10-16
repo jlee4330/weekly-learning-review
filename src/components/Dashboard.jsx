@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, CircleDashed, ArrowLeft } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleDashed, ArrowLeft, RefreshCw } from "lucide-react";
 import "../dashboard.css";
 
 // Instructor-only dashboard, opened by the secret link /#/dash/<DASHBOARD_KEY>.
@@ -112,19 +112,32 @@ function StudentView({ id, sessions, week, onBack }) {
 export default function Dashboard({ dashKey }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0);
   const [selectedWeek, setSelectedWeek] = useState(() => Number(location.hash.split("/")[4]) || null);
   const [student, setStudent] = useState(() => decodeURIComponent(location.hash.split("/")[3] || ""));
 
-  useEffect(() => { (async () => {
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    (async () => {
     try {
-      const r = await fetch("/api/dashboard", { headers: { "X-Dashboard-Key": dashKey }, cache: "no-store", signal: AbortSignal.timeout(30000) })
-        .catch((e) => { throw Error(e.name === "TimeoutError" ? "서버 응답이 없습니다. 페이지를 새로고침해 다시 시도하세요." : "서버에 연결할 수 없습니다."); });
+      const r = await fetch("/api/dashboard", { headers: { "X-Dashboard-Key": dashKey }, cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]) })
+        .catch((e) => { throw Error(e.name === "TimeoutError" ? "서버 응답이 없습니다. 새로고침 버튼으로 다시 시도하세요." : "서버에 연결할 수 없습니다."); });
       if (!r.ok) throw Error(r.status === 404 ? "링크가 올바르지 않습니다."
-        : [502, 503, 504].includes(r.status) ? "API 서버가 응답하지 않습니다. 서버가 켜져 있는지 확인하고 페이지를 새로고침하세요."
+        : [502, 503, 504].includes(r.status) ? "API 서버가 응답하지 않습니다. 서버가 켜져 있는지 확인하고 새로고침 버튼으로 다시 시도하세요."
         : `불러오기 실패 (${r.status})`);
-      setData(await r.json());
-    } catch (e) { setError(e.message); }
-  })(); }, []);
+      const next = await r.json();
+      if (!controller.signal.aborted) setData(next);
+    } catch (e) {
+      if (!controller.signal.aborted) setError(e.message);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
+    })();
+    return () => controller.abort();
+  }, [dashKey, refresh]);
   useEffect(() => {
     document.title = "Review Dashboard";
     const meta = document.createElement("meta");
@@ -155,8 +168,11 @@ export default function Dashboard({ dashKey }) {
           <h1>Weekly Review Dashboard</h1>
           {data && <small>업데이트 {when(data.generatedAt)}</small>}
         </div>
+        <button type="button" className="dash-refresh" onClick={() => setRefresh(value => value + 1)} disabled={loading} aria-busy={loading}>
+          <RefreshCw size={16} aria-hidden="true" />{loading ? "불러오는 중…" : "새로고침"}
+        </button>
       </header>
-      {error && <p className="dash-error">{error}</p>}
+      {error && <p className="dash-error" role="alert">{error}{data && " 기존 데이터를 표시하고 있습니다."}</p>}
       {!data && !error && <p className="dash-empty">불러오는 중…</p>}
       {data && (student ? (
         <StudentView id={student} sessions={sessions} week={selectedWeek} onBack={() => open("")} />
