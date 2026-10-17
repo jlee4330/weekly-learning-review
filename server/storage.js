@@ -72,6 +72,10 @@ export const unpackSession = (id, data, courseId) => {
   const { transcript, messages: _legacy, ...rest } = data;
   const session = { id, courseId, mode: "conversation", language: "en", conversationVersion: "conversation-2", evaluationStatus: "not_started", ...rest };
   for (const k of STORED) if (session[k] === null) delete session[k];
+  // Older local mirrors contained only transcript; the document ID still identifies the week.
+  session.weekId ??= Number(String(id).match(/~Week(\d+)$/)?.[1]) || undefined;
+  // Transcript-only mirrors are written on End, but never override an explicit session status.
+  if (!session.status && transcript?.length) session.status = "completed";
   // A finished week shows its saved transcript (e.g. on the transcript page).
   session.messages = (transcript || []).map((m, i) => ({ id: `${id}-${i}`, role: m.role, text: m.text, createdAt: m.at, order: i, revision: 1, complete: true }));
   return session;

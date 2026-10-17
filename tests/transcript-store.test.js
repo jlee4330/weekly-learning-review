@@ -27,3 +27,9 @@ test("a week is only its transcript: spoken messages in order as { role, text, a
 test("a reset week mirrors as an empty transcript", () => {
   assert.deepEqual(weekEntry({ weekId: 1, messages: [] }), []);
 });
+
+import { mirroredSessionFields } from '../server/transcript-store.js';
+test('mirroring preserves dashboard identity and completion metadata', () => {
+  assert.deepEqual(mirroredSessionFields({ weekId: 3, status: 'completed', completedAt: 'time', feedback: {} }),
+    { weekId: 3, status: 'completed', completedAt: 'time' });
+});

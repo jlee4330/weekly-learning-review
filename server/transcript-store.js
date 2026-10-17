@@ -7,6 +7,11 @@
 // The review store stays the source of truth; mirroring failures are logged and never block the student.
 // Enabled when TRANSCRIPT_FIREBASE_PROJECT_ID and a service account (FIREBASE_SERVICE_ACCOUNT JSON or a credentials file) are set.
 
+export const mirroredSessionFields = (session) => Object.fromEntries(
+  ["studentId", "weekId", "status", "createdAt", "updatedAt", "completedAt", "audioConsent", "audioConsentAt"]
+    .filter(key => session[key] !== undefined).map(key => [key, session[key]])
+);
+
 export const weekKey = (weekId) => `Week${weekId}`;
 export const studentIdOf = (user, uid) => (user?.email ? user.email.split("@")[0] : uid);
 
@@ -37,7 +42,7 @@ export async function createTranscriptStore() {
       if (session?.mode !== "conversation") return;
       const ref = student(session, user), batch = db.batch();
       batch.set(ref, { uid: session.studentId, email: user?.email || null, studentId: ref.id, lastActiveAt: new Date().toISOString() }, { merge: true });
-      batch.set(ref.collection("weeks").doc(weekKey(session.weekId)), { transcript: weekEntry(session) }, { merge: true });
+      batch.set(ref.collection("weeks").doc(weekKey(session.weekId)), { ...mirroredSessionFields(session), transcript: weekEntry(session) }, { merge: true });
       await batch.commit();
     },
     // Reset from the week list: delete that week's document entirely.

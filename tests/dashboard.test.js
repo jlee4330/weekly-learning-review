@@ -85,3 +85,21 @@ test("persisted late flag survives a completed submission and reset", async () =
   records = [];
   assert.deepEqual((await dashboardData(store)).lateStudentsByWeek, lateStudentsByWeek);
 });
+
+import { unpackSession } from '../server/storage.js';
+import { weekContent } from '../server/course-content.js';
+test('transcript-only Week 3 mirrors recover week identity and completion', () => {
+  const guide = weekContent(3);
+  const transcript = guide.questions.flatMap((q, i) => [
+    { role: 'assistant', text: q.question, at: at(i * 20) },
+    { role: 'student', text: 'I can explain this concept.', at: at(i * 20 + 10) },
+  ]);
+  const s = unpackSession('student~Week3', { transcript }, 'course');
+  const summary = summarize(s);
+  assert.equal(s.weekId, 3);
+  assert.equal(s.status, 'completed');
+  assert.equal(summary.progress.total, 3);
+  assert.equal(summary.progress.finished, true);
+  assert.equal(summary.talkMs, 50000);
+  assert.equal(unpackSession('student~Week3', { transcript, status: 'in_progress' }, 'course').status, 'in_progress');
+});
