@@ -5,7 +5,7 @@ export const reviewConfig = {
   courseId: "id40018-2026",
 };
 // Weeks students can open; the rest show as locked until released. Release a week by adding it here.
-export const releasedWeeks = [1, 2];
+export const releasedWeeks = [1, 2, 3, 4, 5];
 // UNLOCKED_WEEKS (server) and VITE_UNLOCKED_WEEKS (browser) can open more: "3,4" or "all".
 const unlockedSetting = (typeof process !== "undefined" && process.env?.UNLOCKED_WEEKS) || import.meta.env?.VITE_UNLOCKED_WEEKS || "";
 export const isWeekUnlocked = (weekId) =>

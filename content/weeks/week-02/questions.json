@@ -2,7 +2,7 @@
   "week": 2,
   "opening": "Can you describe the basic structure of a neural network? Explain the different layers and the roles of weights and activation functions in your own words.",
   "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
-  "note": "Three short explain-in-your-own-words questions, asked in order. A good explanation moves on; a weak one gets discussion and hints (each hint is a concrete everyday scene, getting closer to the idea), never the answer.",
+  "note": "Ask the three questions in order. Require the learner’s own explanation, not keywords. Hints reduce the reasoning task: focus on one part, identify what it does, then connect it to the rest. Choose a hint for the actual gap rather than mechanically reading all hints. Never supply an answer or a worked example. After five completed unsuccessful hint-and-response exchanges on a question, move on without implying mastery.",
   "questions": [
     {
       "id": "w02-q01",
@@ -11,7 +11,7 @@
       "topic": "Structure of a neural network",
       "objective": "Build an intuitive understanding of how neural networks transform inputs and learn from examples.",
       "question": "Can you describe the basic structure of a neural network? Explain the different layers and the roles of weights and activation functions in your own words.",
-      "goodEnough": "Describes the layers (an input layer takes in the data, hidden layers transform it, an output layer gives the prediction), explains that weights set how strongly each signal passes from one unit to the next and are what the network adjusts when it learns, and explains that an activation function transforms each unit's combined input before passing it on, which lets the network represent complex, non-linear patterns.",
+      "goodEnough": "Describes the layers (an input layer takes in the data, hidden layers transform it, an output layer gives the prediction), explains that weights set how strongly each signal passes from one unit to the next and are what the network adjusts when it learns, and explains that an activation function transforms each unit's combined input before passing it on, which lets the network represent complex, non-linear patterns. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
         "input layer receives the data, hidden layers transform it, output layer gives the prediction",
         "weights control how strongly one unit's signal influences the next",
@@ -19,10 +19,11 @@
         "an activation function transforms a unit's combined input (for example, deciding how much signal to pass on), letting stacked layers capture complex patterns"
       ],
       "hints": [
-        "Say we want a network that looks at a photo and says 'cat' or 'dog.' What do we put into the network at the start, and what should come out at the end?",
-        "Between the input and the output, there are several layers of small units, each passing signals to the next. What might those middle layers be doing with the photo on its way to an answer?",
-        "Each connection between units has a weight. If one connection's weight is large and another's is near zero, what does that mean for the signals they carry? And when the network guesses wrong, what gets changed?",
-        "Each unit adds up its incoming signals, then decides how much to pass on, like a dimmer switch that stays off until the input is strong enough. What is this step called, and why would a network without it struggle with complex patterns?"
+        "Start at the beginning and end: what goes into a network, and what should come out?",
+        "Focus on what happens between those two points. What are the middle layers for?",
+        "Look at a single connection. What changes when its weight changes?",
+        "Now focus on a single unit. What is the activation function doing there?",
+        "Put those parts together: how could changing the weights change the final output?"
       ],
       "misconceptions": [
         "a neural network works like a copy of the human brain",
@@ -38,7 +39,7 @@
       "topic": "How LLMs use context",
       "objective": "Understand how foundation models function under the hood (tokenization, next-token prediction) and how the use of context changed from early language models to modern LLMs.",
       "question": "How do modern LLMs use context to generate responses, and how is this different from earlier approaches to language modeling?",
-      "goodEnough": "Explains that a modern LLM generates a response one token at a time, each time predicting what is likely to come next given the whole context (the prompt, earlier conversation and what it has already written), and contrasts this with earlier approaches to language modeling (such as statistical n-gram models or early task-specific neural models) that could only use a few previous words or a narrow context and were built for single tasks.",
+      "goodEnough": "Explains that a modern LLM generates a response one token at a time, each time predicting what is likely to come next given the whole context (the prompt, earlier conversation and what it has already written), and contrasts this with earlier approaches to language modeling (such as statistical n-gram models or early task-specific neural models) that could only use a few previous words or a narrow context and were built for single tasks. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
         "predicts the next token based on everything in the context so far, then repeats",
         "context includes the prompt, earlier turns and the text it has already generated",
@@ -46,9 +47,11 @@
         "modern transformer-based models can use long contexts and be adapted to many tasks through prompting and context instead of being built for one task"
       ],
       "hints": [
-        "Think about your phone keyboard suggesting the next word while you type. What is it looking at when it picks a suggestion?",
-        "An old keyboard might only look at the last word or two. What goes wrong if you try to finish a long sentence that way?",
-        "Now imagine a model that can read your whole message, the earlier conversation and what it has already written before picking each next word. What can it do that the old keyboard could not?"
+        "Focus on the moment just before the model writes its next token. What text is available to it?",
+        "Which parts of that text could affect what comes next?",
+        "After one new token is written, what is different at the next step?",
+        "Now consider an approach that can use only a few previous words. What information might it miss?",
+        "Use that difference to explain why a longer context can matter."
       ],
       "misconceptions": [
         "the model looks up a stored answer from a database",
@@ -64,7 +67,7 @@
       "topic": "Prompting techniques",
       "objective": "Learn few-shot prompting and Chain-of-Thought (CoT) prompting, and how each guides the model's task, format and reasoning.",
       "question": "How can prompting techniques help you get more useful responses from an AI chatbot? Give a specific example.",
-      "goodEnough": "Explains both few-shot prompting (adding a few input-output examples so the model infers the task and output format, without retraining) and Chain-of-Thought prompting (asking the model to work through intermediate steps, which helps on multi-step problems), says why each makes responses more useful, and gives a concrete example for at least one of them.",
+      "goodEnough": "Explains both few-shot prompting (adding a few input-output examples so the model infers the task and output format, without retraining) and Chain-of-Thought prompting (asking the model to work through intermediate steps, which helps on multi-step problems), says why each makes responses more useful, and gives a concrete example for at least one of them. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
         "few-shot: adding input-output examples shows the task, labels and output format in context",
         "few-shot does not retrain the model; its weights do not change, and good examples cover typical and edge cases in a consistent format",
@@ -73,10 +76,11 @@
         "a specific example, such as labeling reviews with a few examples or solving a word problem step by step"
       ],
       "hints": [
-        "Imagine explaining a new job to a part-time worker. Is it easier for them if you only describe the rule, or if you also show a few finished examples? What would that look like in a prompt?",
-        "If you ask a chatbot to sort reviews and give it two or three labeled examples first, what does the chatbot learn from them, and does the model itself change?",
-        "Now think of a tricky word problem. When you solve it in your head all at once, you often slip. What helps when you write out each step, and how could you ask a chatbot to do the same?",
-        "If the chatbot shows its steps and reaches an answer, is that answer guaranteed to be right? What should you still do?"
+        "Choose just one prompting technique you remember. What would you add to a plain request when using it?",
+        "What would that addition show or ask the model to do?",
+        "What about the response are you hoping to change?",
+        "Think of a task of your own where that change would be useful. Why would it help?",
+        "Now choose the other technique from the lecture. How would its instructions help in a different way?"
       ],
       "misconceptions": [
         "few-shot examples retrain or permanently change the model",

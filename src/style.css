@@ -1781,3 +1781,10 @@ main {padding-top:26px;}
  .continuous-conversation .conversation-room .agent-card h1.agent-question,
  .continuous-conversation .conversation-room .agent-card h1.agent-question.long { font-size:24px; line-height:1.4; }
 }
+
+/* The RAG reference belongs to the active question, including its follow-up discussion. */
+.continuous-conversation .conversation-room .agent-card.has-illustration { height:auto; overflow:visible; }
+.question-illustration { margin:24px 0; }
+.question-illustration a { display:block; border-radius:12px; }
+.question-illustration img { display:block; width:100%; height:auto; border-radius:12px; }
+.question-illustration a:focus-visible { outline:3px solid #294d72; outline-offset:4px; }

@@ -5,7 +5,7 @@ const koTitles = [
   "LLM과 프롬프트 엔지니어링 · 1",
   "LLM과 프롬프트 엔지니어링 · 2",
   "National Holiday (Choo-Suk)",
-  "지식 증강 AI 시스템 · 2",
+  "지식 증강 AI 시스템 · 1",
   "에이전트 AI 시스템 · 1",
   "에이전트 AI 시스템 · 2",
   "수업 없음",
@@ -60,13 +60,13 @@ const expected = [
 export const titleOf = (w, lang) =>
   lang === "ko" ? koTitles[w.id - 1] : w.title;
 export const objectiveOf = (w, lang) =>
-  !w.reviewAvailable
+  w.description || (!w.reviewAvailable
     ? lang === "ko"
       ? "이 주차에는 리뷰가 없습니다."
       : "No oral review scheduled."
     : lang === "ko"
       ? `${topics[w.id - 1][1]}의 역할을 설명하고 서비스 설계 선택에 연결합니다.`
-      : `Explain ${topics[w.id - 1][0]} and connect it to a service design choice.`;
+      : `Explain ${topics[w.id - 1][0]} and connect it to a service design choice.`);
 export function questionsFor(weekId, lang) {
   const topic = topics[weekId - 1]?.[lang === "ko" ? 1 : 0];
   if (!topic) return [];

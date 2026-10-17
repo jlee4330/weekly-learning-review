@@ -97,3 +97,20 @@ Lecture excerpts:
 > Importantly, collaboration has multiple possible outcomes: participation, information sharing, equality, common ground, decision quality, and satisfaction. Improving one does not automatically improve the others.
 
 > Effective AI facilitation requires more than summarizing what participants have said. The system may need to elicit perspectives, represent agreement and disagreement, model common ground, manage participation and turns, preserve minority viewpoints during synthesis, reframe conflicts, and support iterative deliberation.
+
+## Four dimensions (complete lecture framework)
+
+- **User & Role Modeling:** Understand the user's goals, knowledge, preferences, context and history, and define an appropriate AI role.
+- **Representation & UI:** Decide how information is presented and interacted with, including visualizations, structured views, multimodal content and interactive objects.
+- **Agency & Adaptation:** Decide who takes initiative, from human-led to mixed-initiative or proactive behavior, and adapt to user actions and feedback.
+- **Learning & Orchestration Over Time:** Maintain user models and memories, coordinate longer-term plans and adapt across repeated interactions. Mechanisms include conversation memory, RAG, knowledge bases or LLM wikis, fine-tuning and planning/orchestration.
+
+## Learning outcomes and learner agency
+
+The lecture identifies cognitive overload, inaccurate information, over-reliance, insufficient personalization, passive learning and reduced learner autonomy as educational risks. Evaluate whether the interaction supports the intended learning process and outcome, not simply whether it produces a helpful answer. The review's suggestions to check independent problem solving, retention and transfer are assessment applications of this principle, not a quoted lecture protocol.
+
+## Prompt Arena · Stage 2
+
+The Agent Training Center offers five roles: Teacher, Salesperson, Comedian, Counselor and Moderator, each with a different human-centered objective. Students modify a baseline prompt to guide user understanding, initiative, adaptation and multi-turn interaction, then test each prompt against five different personas. They inspect successful and unsuccessful conversations, compare experiments and revise strategies that work unevenly across users.
+
+The activity follows: Understand the purpose → Understand the user → Choose an interaction strategy → Act → Observe → Adapt. Reflection should draw on the student's actual experiment; do not invent a chosen role, persona response or revision for them.

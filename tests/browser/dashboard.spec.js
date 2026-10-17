@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/dashboard/sessions/*/audio', route => route.fulfill({ json: { recordings: [] } }));
+});
+
 test('student overview shows both weeks and opens the saved Week 2 transcript', async ({ page }) => {
   const session = (studentId, weekId) => ({
     id: `${studentId}~Week${weekId}`, studentId, weekId, status: 'completed',

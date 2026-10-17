@@ -495,6 +495,7 @@ function App() {
               </div>
               <div className="week-list">
                 {weeks
+                  .filter((w) => w.id <= 5)
                   .filter(
                     (w) =>
                       filter === "all" ||
@@ -572,12 +573,6 @@ function App() {
                     );
                   })}
               </div>
-              <p className="source-note">
-                {t(
-                  "Topics follow the existing course schedule. Learning goals and questions are editable drafts; weeks 8 and 16 have no review.",
-                  "주제는 기존 수업 일정표 기준입니다. 학습 목표와 질문은 수정 가능한 초안이며, 8·16주차는 리뷰가 없습니다.",
-                )}
-              </p>
             </div>
           )}
           {page === "setup" && week && (

@@ -1,20 +1,96 @@
 {
   "week": 3,
-  "opening": "Why might designing an LLM interaction begin with the human outcome, rather than the answer you want the model to generate?",
-  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "opening": "What are the four dimensions of Agentic Experience Design? Explain each in your own words.",
+  "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
+  "note": "Ask the three questions in order. Require the learner’s own explanation, not keywords. Hints reduce the reasoning task: focus on one part, identify what it does, then connect it to the rest. Choose a hint for the actual gap rather than mechanically reading all hints. Never supply an answer or a worked example. After five completed unsuccessful hint-and-response exchanges on a question, move on without implying mastery.",
+  "sources": [
+    "dasd2026/src/components/lectures/Week3.jsx"
+  ],
   "questions": [
     {
       "id": "w03-q01",
-      "topic": "LLM & Prompt Engineering - Part 2",
+      "type": "explain",
       "phase": "understand",
-      "question": "Why might designing an LLM interaction begin with the human outcome, rather than the answer you want the model to generate?",
+      "topic": "Four dimensions of Agentic Experience Design",
+      "objective": "Translate a human goal into an LLM interaction design using the four complementary dimensions.",
+      "question": "What are the four dimensions of Agentic Experience Design? Explain each in your own words.",
+      "goodEnough": "Identifies and explains all four dimensions in their own words: User & Role Modeling, Representation & UI, Agency & Adaptation, and Learning & Orchestration Over Time. Connects each to a distinct design decision; equivalent plain-language descriptions are acceptable. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
-        "multiple input modalities",
-        "alignment",
-        "modality limitations"
+        "User & Role Modeling: understand user goals, knowledge, preferences, context and history, and choose an appropriate AI role",
+        "Representation & UI: choose how information is presented and interacted with, beyond conversational text",
+        "Agency & Adaptation: decide who takes initiative and how the system adjusts to user actions and feedback",
+        "Learning & Orchestration Over Time: maintain memory and user models, coordinate plans and adapt across repeated interactions"
       ],
-      "followUps": [],
-      "misconceptions": []
+      "hints": [
+        "Start with one dimension you remember. What would you have to decide when designing that part of an experience?",
+        "Focus on a dimension you have named but not explained. What would you change in the design when making a different choice there?",
+        "Compare two dimensions you have named. What decision belongs to one but not the other?",
+        "Pick one dimension you are still unsure about. Which words in its name can you explain first?",
+        "Build from those words: what part of designing the interaction does that dimension help you think about?"
+      ],
+      "misconceptions": [
+        "the four dimensions are four prompt formats",
+        "experience design only means improving the wording of a single answer",
+        "adaptation across sessions happens automatically without memory or orchestration"
+      ]
+    },
+    {
+      "id": "w03-q02",
+      "type": "explain",
+      "phase": "connect",
+      "topic": "Tutoring, initiative and learner control",
+      "objective": "Design tutoring interventions that support active learning and evaluate the intended human outcome.",
+      "question": "Why is a helpful AI assistant not necessarily a good tutor? Use a specific example to explain when an AI tutor should take initiative, when learners should remain in control, and how you would evaluate whether this balance supports learning.",
+      "goodEnough": "Explains why a correct immediate answer can bypass learning. Uses a concrete learning scenario to identify when the tutor should diagnose or scaffold and when the learner should attempt, choose an approach, retry or reflect. Proposes evidence of learning such as independent explanation, later retention or transfer to a new problem, alongside signs of autonomy or over-reliance, rather than satisfaction or completion alone. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "helpfulness or answer quality is different from learning quality",
+        "Assess → Let the student struggle → Diagnose → Scaffold → Retry → Reflect",
+        "take initiative when an observed difficulty calls for a targeted hint or diagnostic question",
+        "preserve learner reasoning, meaningful choices, retries and reflection",
+        "evaluate independent understanding and application; check autonomy, overload and dependence"
+      ],
+      "hints": [
+        "Start with a learner getting an answer right. What would you still want them to explain before you believed they understood it?",
+        "Choose a learning task of your own. What should the learner try before the tutor steps in?",
+        "In that attempt, what would show you that the learner is stuck rather than still thinking?",
+        "If the tutor helps at that point, what should the learner still work out for themselves?",
+        "After the help, what could you ask the learner to do on their own to check their understanding?"
+      ],
+      "misconceptions": [
+        "a correct answer or a happy learner proves learning",
+        "a good tutor always gives the solution immediately",
+        "learner control means the tutor must never intervene",
+        "a teacher role prompt alone guarantees effective pedagogy"
+      ]
+    },
+    {
+      "id": "w03-q03",
+      "type": "explain",
+      "phase": "reflect",
+      "topic": "Prompt Arena strategy and revision",
+      "objective": "Reflect on prompt experiments as interaction strategies across diverse users.",
+      "question": "In Prompt Arena, you chose an agent role—Teacher, Salesperson, Comedian, Counselor, or Moderator—and tested your prompt with five different user personas. Describe one strategy you tried and how you revised it after reviewing the conversations. What did you learn about how prompt choices shape the user’s experience?",
+      "goodEnough": "Names the chosen role and intended human outcome, describes an actual prompt strategy, points to a concrete observation from the persona conversations, and explains a resulting revision and its intended effect on the experience. Relates the lesson to user modeling, initiative, adaptation or multi-turn interaction. Does not need to report improvement if the revision was not retested; distinguish observed outcomes from expectations. If the activity was not completed, do not invent personal experience or treat a hypothetical example as evidence of participation. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "role and human-centered objective",
+        "specific initial prompt instruction or strategy",
+        "conversation evidence showing why the strategy helped or failed for different users",
+        "concrete before-and-after revision tied to that evidence",
+        "lesson about how prompt choices shape user agency, tone, adaptation or interaction over multiple turns"
+      ],
+      "hints": [
+        "Start with one instruction you actually put in your prompt. What did you want the agent to do?",
+        "Choose one conversation you remember. At what point did the agent’s response work well or poorly for that person?",
+        "What in the response made you think that?",
+        "Which part of your instruction did you change because of that moment?",
+        "Compare the behavior you first asked for with the behavior you asked for after the change. How would that affect the person using the agent?"
+      ],
+      "misconceptions": [
+        "one successful persona proves a prompt works for everyone",
+        "a higher score alone explains why the experience improved",
+        "naming a role fully specifies a multi-turn interaction strategy",
+        "an untested revision is evidence of improved outcomes"
+      ]
     }
   ]
 }

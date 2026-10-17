@@ -6,6 +6,7 @@ import { joinClips } from '../services/speech-clip';
 import { repository } from '../services/api';
 import { reviewErrorMessage } from '../services/errors';
 import { splitQuestion, reviewProgress } from '../services/question-split';
+import ragPipeline from '../assets/week05-rag-pipeline.png';
 import { weekQuestions } from '../../content/weeks/index.js';
 
 export default function ConversationReview({ session, deviceId, onUpdate, onComplete, onLeave }) {
@@ -101,7 +102,8 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
   const knownQuestions = [guide?.opening, ...(guide?.questions || []).map(q => q.question)].filter(Boolean);
   const [lead, question, tail] = splitQuestion(agent?.text || '', knownQuestions);
   const progress = reviewProgress(messages, guide);
-  useEffect(() => { const pin = () => { const el = stage.current; if (el) el.scrollTop = el.scrollHeight; }; const frame = requestAnimationFrame(pin); document.fonts?.ready.then(pin); return () => cancelAnimationFrame(frame); }, [agent?.text]);
+  const showRagPipeline = Number(session.weekId) === 5 && progress?.current === 2 && !progress.done;
+  useEffect(() => { const pin = () => { const el = stage.current; if (el) el.scrollTop = showRagPipeline ? 0 : el.scrollHeight; }; const frame = requestAnimationFrame(pin); document.fonts?.ready.then(pin); return () => cancelAnimationFrame(frame); }, [agent?.text, showRagPipeline]);
   const labels = { connecting: t('Connecting…', '연결 중…'), listening: t('I’m listening', '이야기를 듣고 있어요'), thinking: t('Thinking with you…', '함께 생각하고 있어요…'), speaking: t('Speaking…', '학습 에이전트가 이야기하고 있어요'), paused: t('Conversation paused', '대화가 잠시 멈췄어요'), error: t('Connection interrupted', '연결이 끊어졌어요') };
   const micIssue = state === 'listening' && (signal === 'muted' || signal === 'disconnected');
   const level = Math.min(1, (bars.at(-1) + bars.at(-2) + bars.at(-3)) / 3 * 1.6);
@@ -129,7 +131,7 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
       </aside>
       <div className="question-space">
       {progress && <span className="question-count" aria-live="polite">{progress.done ? t('All questions done') : t(`Question ${progress.current} of ${progress.total}`)}</span>}
-    <section className="agent-card" ref={stage}>{agent ? <>{lead && <p className="agent-lead">{lead}</p>}{question && <h1 className={`agent-question${question.length > 110 ? ' long' : ''}`}>{question}</h1>}{question && tail && <p className="agent-tail">{tail}</p>}</> : <h1 className="agent-question">{t('Your conversation is about to begin.', '곧 대화가 시작됩니다.')}</h1>}</section>
+    <section className={`agent-card${showRagPipeline ? ' has-illustration' : ''}`} ref={stage}>{agent ? <>{lead && <p className="agent-lead">{lead}</p>}{question && <h1 className={`agent-question${question.length > 110 ? ' long' : ''}`}>{question}</h1>}{showRagPipeline && <figure className="question-illustration"><a href={ragPipeline} target="_blank" rel="noopener noreferrer" aria-label="Open RAG pipeline diagram at full size"><img src={ragPipeline} width="1382" height="882" alt="RAG pipeline: document preparation and indexing above, retrieval and answer generation below." /></a></figure>}{question && tail && <p className="agent-tail">{tail}</p>}</> : <h1 className="agent-question">{t('Your conversation is about to begin.', '곧 대화가 시작됩니다.')}</h1>}</section>
       </div>
     </div>
     {state === 'paused' && recording && <AnswerPlayback src={recording}/>}

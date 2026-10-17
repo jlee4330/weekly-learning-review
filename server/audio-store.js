@@ -1,3 +1,4 @@
+import { sessionKey } from "./storage.js";
 import reviewFirebase from "../config/review-firebase.json" with { type: "json" };
 import { studentIdOf, weekKey } from "./transcript-store.js";
 
@@ -22,6 +23,16 @@ export async function createAudioStore() {
       const path = `${prefix(session, user)}${startedAt.replace(/[:.]/g, "-")}.${extension}`;
       await bucket.file(path).save(data, { contentType, resumable: false, metadata: { metadata: { sessionId: session.id, startedAt } } });
       return path;
+    },
+    async recordings(session) {
+      const student = sessionKey(session.id) || session.studentId;
+      if (!student || /[\\/]/.test(student)) return [];
+      const [files] = await bucket.getFiles({ prefix: `students/${student}/${weekKey(session.weekId)}/` });
+      return files.filter(file => file.metadata?.metadata?.sessionId === session.id)
+        .map(file => ({ id: file.name.split('/').at(-1), startedAt: file.metadata.metadata.startedAt,
+          contentType: file.metadata.contentType, file }))
+        .filter(item => Number.isFinite(Date.parse(item.startedAt)))
+        .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt));
     },
     async clear(session, user) {
       try { await bucket.deleteFiles({ prefix: prefix(session, user) }); }

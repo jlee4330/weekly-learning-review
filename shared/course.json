@@ -29,10 +29,11 @@
   },
   {
     "id": 5,
-    "title": "Knowledge-Augmented AI Systems - Part 2",
+    "title": "Knowledge-Augmented AI Systems - Part 1",
     "sourceSummary": "RAG, Memory, and Tool, Vector Embedding.",
     "source": "dasd2026/src/components/Schedule.jsx",
-    "reviewAvailable": true
+    "reviewAvailable": true,
+    "description": "Designing what an AI can know, remember, and access beyond its model parameters."
   },
   {
     "id": 6,

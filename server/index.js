@@ -74,6 +74,24 @@ app.get("/api/dashboard", dashboardLimit, async (req, res) => {
   try { res.json(await dashboardData(store)); }
   catch (error) { console.error("DASHBOARD_FAILED", error.message); res.status(500).json({ error: "DASHBOARD_FAILED" }); }
 });
+// Audio is read through the same dashboard key; never expose public bucket URLs.
+app.get("/api/dashboard/sessions/:id/audio{/:file}", dashboardLimit, async (req, res) => {
+  if (!dashboardKeyMatches(req.get("x-dashboard-key"))) return res.status(404).json({ error: "NOT_FOUND" });
+  res.set("Cache-Control", "no-store");
+  try {
+    const session = await store.get(req.params.id);
+    if (!session) return res.status(404).json({ error: "NOT_FOUND" });
+    const recordings = audio ? await audio.recordings(session) : [];
+    if (!req.params.file) return res.json({ recordings: recordings.map(({ file, ...item }) => item) });
+    const recording = recordings.find(item => item.id === req.params.file);
+    if (!recording) return res.status(404).json({ error: "NOT_FOUND" });
+    const [data] = await recording.file.download();
+    res.type(recording.contentType || "audio/webm").send(data);
+  } catch (error) {
+    console.error("DASHBOARD_AUDIO_FAILED", error.message);
+    res.status(500).json({ error: "AUDIO_UNAVAILABLE" });
+  }
+});
 app.use("/api", async (req, res, next) => {
   if (local) {
     if (!allowLocalRequest(req)) return res.status(403).json({ error: "LOCAL_ACCESS_ONLY" });

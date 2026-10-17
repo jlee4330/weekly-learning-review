@@ -1,20 +1,104 @@
 {
   "week": 5,
-  "opening": "How would you distinguish the roles of retrieval, memory, and tools in an AI service?",
-  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "opening": "Why does an LLM application need context beyond what the model learned during training? Describe different ways to provide context and give examples of when they would be useful.",
+  "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
+  "note": "Ask the three questions in order. Require the learner’s own explanation, not keywords. Hints reduce the reasoning task: focus on one part, identify what it does, then connect it to the rest. Choose a hint for the actual gap rather than mechanically reading all hints. Never supply an answer or a worked example. After five completed unsuccessful hint-and-response exchanges on a question, move on without implying mastery.",
+  "sources": [
+    "dasd2026/src/components/lectures/Week5.jsx"
+  ],
   "questions": [
     {
       "id": "w05-q01",
-      "topic": "Knowledge-Augmented AI Systems - Part 2",
+      "type": "explain",
       "phase": "understand",
-      "question": "How would you distinguish the roles of retrieval, memory, and tools in an AI service?",
+      "topic": "Context beyond model parameters",
+      "objective": "Distinguish model parameters from situated information and choose suitable context sources.",
+      "question": "Why does an LLM application need context beyond what the model learned during training? Describe different ways to provide context and give examples of when they would be useful.",
+      "goodEnough": "Explains that training does not automatically supply current, private, user-specific or task-specific information and that adding context does not update weights. Describes several complementary context methods with concrete uses, distinguishing direct documents, retrieved evidence, saved learner history and live tool results; may also discuss structured knowledge, current task state or clarification. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
-        "persistent context",
-        "external actions",
-        "permissions"
+        "direct context: attach a small set of lecture notes",
+        "RAG: select relevant passages from a larger or changing collection",
+        "structured knowledge / OKF: organize linked concepts for navigation or retrieval",
+        "memory: select and recall previous mistakes or preferences",
+        "tools / APIs: obtain current deadlines or live availability",
+        "current task state and asking the user: supply the draft, selected passage or missing goal",
+        "context changes model input, not model parameters; methods can be combined"
       ],
-      "followUps": [],
-      "misconceptions": []
+      "hints": [
+        "Focus on one request from a user. What information would someone need to answer it?",
+        "Which of that information depends on this particular user or on when they ask?",
+        "Choose one piece the model might be missing. Where could the application get it?",
+        "How would that information reach the model before it answers?",
+        "Choose a second kind of missing information. Would you get it the same way? Explain your choice."
+      ],
+      "misconceptions": [
+        "adding documents to a prompt retrains the model",
+        "the model automatically knows private records or current facts",
+        "saved memory is useful even when it is never brought into context",
+        "RAG, memory and tools are mutually exclusive"
+      ]
+    },
+    {
+      "id": "w05-q02",
+      "type": "explain",
+      "phase": "understand",
+      "topic": "RAG preparation and answer generation",
+      "objective": "Explain the preparation and question-time pipelines and distinguish retrieval from generation failures.",
+      "question": "Explain each step of a RAG pipeline in your own words, from document preparation to answer generation.",
+      "goodEnough": "Describes preparing source documents, splitting them into meaningful chunks while retaining metadata, embedding chunks and storing vectors linked to text in an index. At question time, embeds the query in a compatible space, retrieves and filters relevant candidates (optionally reranking), assembles selected evidence within the context budget, and generates an evidence-grounded answer with sources or acknowledges missing or conflicting evidence. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "prepare documents and retain source, date/version and access metadata",
+        "split into meaningful chunks with a trade-off between lost context and diluted relevance",
+        "embed chunks and store vectors linked to passages in a search index",
+        "embed the query using a compatible encoder and retrieve candidate passages",
+        "filter by permission/version; optionally use keyword search or reranking",
+        "assemble selected text as context within the input budget",
+        "generate a supported answer, identify sources and acknowledge conflicts or insufficient evidence"
+      ],
+      "hints": [
+        "Start with a collection of long documents. What would make it easier to find just the part needed for a question?",
+        "Once you have smaller passages, what would you need to keep with them so you can find and use them later?",
+        "Now a question arrives. How could the system decide which stored passages to look at?",
+        "After choosing passages, what should be passed to the model that will write the answer?",
+        "Look back at your steps. What does each one provide that the next step needs?"
+      ],
+      "misconceptions": [
+        "RAG trains the generator on each retrieved document",
+        "the index stores only vectors without a link to source text",
+        "retrieval and generation are the same step",
+        "all retrieved documents should always be included",
+        "citations or RAG guarantee correctness"
+      ]
+    },
+    {
+      "id": "w05-q03",
+      "type": "explain",
+      "phase": "reflect",
+      "topic": "Vector embeddings and retrieval limits",
+      "objective": "Explain semantic retrieval without treating similarity as truth or answer relevance.",
+      "question": "What is a vector embedding, and how does it help a RAG system find relevant information? Explain why the most similar passage may not always answer the user’s question.",
+      "goodEnough": "Describes an embedding as an ordered numerical vector representing text, and explains comparing query and passage vectors in a compatible space, for example using cosine similarity, to retrieve related meanings despite different wording. Explains with a concrete example why related topic is not sufficient evidence: a passage may omit the requested fact, be outdated, refer to a different entity or contain opposite claims. Recognizes that top-k can return neighbors even when no passage answers the question. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "embedding model maps text to an ordered list of numbers",
+        "query and document vectors must share a compatible embedding space",
+        "similarity search can match borrow a camera with equipment reservation",
+        "cosine similarity compares directions, not probability of truth",
+        "related passages may disagree, omit the answer or have the wrong date/product",
+        "top-k still returns candidates when no relevant answer exists; inspect evidence and exact details"
+      ],
+      "hints": [
+        "Start with the output of an embedding model. What kind of thing does it produce from text?",
+        "If you have that output for a question and for a passage, what could you compare?",
+        "What is the search trying to find by making that comparison?",
+        "Focus on the information the user asked for. What would you need to see inside the passage before using it to answer?",
+        "What might be missing from a passage even when it is closely related to the question?"
+      ],
+      "misconceptions": [
+        "an embedding is a stored natural-language answer",
+        "a similarity of 0.9 means a 90 percent chance of truth",
+        "the nearest passage necessarily contains the answer",
+        "arbitrary embedding models produce directly comparable vectors"
+      ]
     }
   ]
 }

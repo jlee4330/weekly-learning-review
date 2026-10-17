@@ -2,7 +2,7 @@
   "week": 1,
   "opening": "How is a probability-based system, like an AI model, different from a rules-based system?",
   "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
-  "note": "Three short explain-in-your-own-words questions, asked in order. A good explanation moves on; a weak one gets discussion and hints (each hint is a concrete everyday scene, getting closer to the idea), never the answer.",
+  "note": "Ask the three questions in order. Require the learner’s own explanation, not keywords. Hints reduce the reasoning task: focus on one part, identify what it does, then connect it to the rest. Choose a hint for the actual gap rather than mechanically reading all hints. Never supply an answer or a worked example. After five completed unsuccessful hint-and-response exchanges on a question, move on without implying mastery.",
   "questions": [
     {
       "id": "w01-q01",
@@ -11,7 +11,7 @@
       "topic": "Rules-based vs. probability-based systems",
       "objective": "Distinguish probabilistic AI behavior from deterministic UI/UX design.",
       "question": "How is a probability-based system, like an AI model, different from a rules-based system?",
-      "goodEnough": "Explains that a rules-based system follows behavior people wrote in advance, so the same input gives the same output, while a probability-based system learns patterns from data and picks likely outputs, so results can vary.",
+      "goodEnough": "Explains that a rules-based system follows behavior people wrote in advance, so the same input gives the same output, while a probability-based system learns patterns from data and picks likely outputs, so results can vary. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
         "rules-based: behavior written by people, same input gives same output",
         "probability-based: behavior learned from data, outputs can vary",
@@ -19,9 +19,11 @@
         "designers shape AI behavior indirectly (prompts, data, examples)"
       ],
       "hints": [
-        "Picture a vending machine: you press B3 and get the same drink every time. Now picture asking a friend for advice. Which one works more like an AI model?",
-        "Someone set up the vending machine in advance. Where does your friend's advice come from instead?",
-        "If you asked that friend the same question on two different days, would you get exactly the same words?"
+        "Start with just the rules-based system. Before it runs, what has someone decided for it?",
+        "Now focus on the AI model. What is the purpose of training it?",
+        "Think about how each system gets its behavior. What is different?",
+        "If a system gives a wrong output, what would you inspect in each case?",
+        "Use what you have said about how they work to explain one difference in their outputs."
       ],
       "misconceptions": [
         "different answers mean the AI is broken",
@@ -35,7 +37,7 @@
       "topic": "What is a data-driven AI service?",
       "objective": "Explain how data, models, interaction, service logic, evaluation, and governance work together.",
       "question": "Besides the AI model itself, what other parts does an AI service need to work well?",
-      "goodEnough": "Names at least two non-model parts (data, interaction/interface, service logic, evaluation and governance) and briefly says what one of them does.",
+      "goodEnough": "Names at least two non-model parts (data, interaction/interface, service logic, evaluation and governance) and explains what each of those parts contributes and why it is needed. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
         "data such as watch history or ratings",
         "the interface where you see and react to it",
@@ -43,10 +45,11 @@
         "checking that it works and is fair, and protecting data"
       ],
       "hints": [
-        "Imagine Netflix with only the AI model and nothing else. What would it need to know about you first?",
-        "Where do you actually see the recommendation, and what can you click on?",
-        "What stops Netflix from recommending a horror movie to a 7-year-old, even if the model picked it?",
-        "How would Netflix find out whether its recommendations are actually good?"
+        "Think about what happens before the model can produce anything. What does the service need at that point?",
+        "Now think about what happens after the model produces an output. How does it become useful to a person?",
+        "Choose one part from your answer. What job does it do that the model does not?",
+        "If that part were missing, what would stop working?",
+        "Choose a second part and explain why the service needs it too."
       ],
       "misconceptions": [
         "the model is the whole service"
@@ -59,7 +62,7 @@
       "topic": "Integrating foundation models into interactive systems",
       "objective": "Explain how existing foundation models are constrained and transformed for interactive services, including their opportunities and challenges.",
       "question": "When we build a foundation model into an interactive service, what are some opportunities it opens up, and what challenges come with it?",
-      "goodEnough": "Gives at least one concrete opportunity and at least one concrete challenge from integrating foundation models into interactive systems, and briefly explains why each matters for users or designers.",
+      "goodEnough": "Gives at least one concrete opportunity and at least one concrete challenge from integrating foundation models into interactive systems, and briefly explains why each matters for users or designers. Require the learner to explain the relevant roles, relationships or reasons in their own words; a list of keywords, repetition of the question or unsupported assertions alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
         "opportunities: natural-language or multimodal interaction, fast creation of content, flexible support for many goals, personalized help, mixed-initiative collaboration, tool use and automation, faster prototyping",
         "challenges: hallucination or wrong answers, inconsistent behavior, hard to explain, bias, privacy and memory, overreliance on AI, hard to evaluate, unclear responsibility",
@@ -67,9 +70,11 @@
         "the design question is what interaction to build around the model so it is useful, understandable and controllable"
       ],
       "hints": [
-        "Before AI, you clicked through menus to get things done. What changes when you can just say what you want in plain words?",
-        "What could happen if an AI gives a confident but wrong answer to someone who trusts it?",
-        "Imagine the AI makes a mistake that affects a real user. What might that user worry about, and who would sort it out?"
+        "Focus on just one thing a person could do with the model’s help. What would you choose?",
+        "Without that help, what would be harder for the person?",
+        "Stay with the same use. What would the person need to be able to trust?",
+        "If that trust turned out to be misplaced, how would it affect them?",
+        "Use your answers to explain one opportunity and one challenge for that service."
       ],
       "misconceptions": [
         "more capability always makes a better service",

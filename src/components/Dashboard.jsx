@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleAlert, CircleDashed, ArrowLeft, RefreshCw } from "lucide-react";
 import "../dashboard.css";
+import TranscriptAudio from "./TranscriptAudio";
 
 // Instructor-only dashboard, opened by the secret link /#/dash/<DASHBOARD_KEY>.
 // The key stays in the URL fragment (never sent as part of a request URL) and goes to the API as a header.
@@ -44,7 +45,7 @@ function Progress({ s }) {
   );
 }
 
-function Transcript({ s }) {
+function Transcript({ s, replay }) {
   if (!s.transcript.length)
     return <p className="dash-empty">저장된 transcript가 없습니다. (End를 누르기 전에는 저장되지 않습니다)</p>;
   const start = s.transcript[0].at;
@@ -64,6 +65,7 @@ function Transcript({ s }) {
             <time>{clock(m.at, start)}</time>
           </div>
           <p>{m.text}</p>
+          {replay(m, i)}
         </li>
         </React.Fragment>
       ))}
@@ -72,14 +74,9 @@ function Transcript({ s }) {
   );
 }
 
-function StudentView({ id, sessions, week, onBack }) {
-  const mine = sessions.filter((s) => s.studentId === id && (!week || s.weekId === week)).sort((a, b) => a.weekId - b.weekId);
-  return (
-    <section className="dash-student">
-      <button className="dash-back" onClick={onBack}><ArrowLeft size={16} /> 전체 목록</button>
-      <h2>{id}</h2>
-      {mine.map((s) => (
-        <article key={s.id} className="dash-week">
+function StudentWeek({ s, dashKey }) {
+  return <TranscriptAudio session={s} dashKey={dashKey}>{(replay, toolbar) => (
+        <article className="dash-week">
           <header>
             <h3>Week {s.weekId}</h3>
             <Progress s={s} />
@@ -89,22 +86,31 @@ function StudentView({ id, sessions, week, onBack }) {
               <div><dt>세션 시간</dt><dd>{dur(s.sessionMs)}</dd></div>
               <div><dt>학생 발화</dt><dd>{s.studentTurns}회 · {s.studentSentences}문장</dd></div>
               <div><dt>시작</dt><dd>{when(s.createdAt)}</dd></div>
+              {Array.from({ length: s.progress.total }, (_, k) => {
+                const q = s.progress.perQuestion.find((x) => x.n === k + 1);
+                return (
+                  <div key={k}>
+                    <dt>Q{k + 1}</dt>
+                    <dd>{q ? `${dur(q.ms)} · ${q.sentences}문장${q.answered ? "" : " · 답변 없음"}` : "도달 못 함"}</dd>
+                  </div>
+                );
+              })}
             </dl>
-            {s.progress.total > 0 && (
-              <ul className="dash-qtimes">
-                {Array.from({ length: s.progress.total }, (_, k) => {
-                  const q = s.progress.perQuestion.find((x) => x.n === k + 1);
-                  return (
-                    <li key={k} className={!q ? "missed" : q.answered ? "" : "unanswered"}>
-                      <b>Q{k + 1}</b> {q ? `${dur(q.ms)} · ${q.sentences}문장${q.answered ? "" : " · 답변 없음"}` : "도달 못 함"}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            {toolbar}
           </header>
-          <Transcript s={s} />
+          <Transcript s={s} replay={replay} />
         </article>
+  )}</TranscriptAudio>;
+}
+
+function StudentView({ id, sessions, week, onBack, dashKey }) {
+  const mine = sessions.filter((s) => s.studentId === id && (!week || s.weekId === week)).sort((a, b) => a.weekId - b.weekId);
+  return (
+    <section className="dash-student">
+      <button className="dash-back" onClick={onBack}><ArrowLeft size={16} /> 전체 목록</button>
+      <h2>{id}</h2>
+      {mine.map((s) => (
+        <StudentWeek key={s.id} s={s} dashKey={dashKey} />
       ))}
     </section>
   );
@@ -186,7 +192,7 @@ export default function Dashboard({ dashKey }) {
       {error && <p className="dash-error" role="alert">{error}{data && " 기존 데이터를 표시하고 있습니다."}</p>}
       {!data && !error && <p className="dash-empty">불러오는 중…</p>}
       {data && (student ? (
-        <StudentView id={student} sessions={sessions} week={selectedWeek} onBack={() => open("")} />
+        <StudentView dashKey={dashKey} id={student} sessions={sessions} week={selectedWeek} onBack={() => open("")} />
       ) : (
             <section className="dash-overview" aria-label="학생별 주차 현황">
               <div className="dash-table-wrap">
