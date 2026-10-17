@@ -1,15 +1,11 @@
 ---
 week: 4
-title: Knowledge-Augmented AI Systems - Part 1
-status: schedule_only_lecture_week_mismatch
-scope: RAG, Memory, and Tool, Vector Embedding.
-source: dasd2026/src/components/Schedule.jsx
+title: National Holiday (Choo-Suk)
+status: no_class
+scope: No class or oral review this week.
+source: Instructor schedule correction
 ---
 
-# Week 04 · Knowledge-Augmented AI Systems - Part 1
+# Week 04 · National Holiday (Choo-Suk)
 
-> Only the schedule summary is available for this week. Do not invent lecture details beyond the scope below.
-
-## Scope
-
-RAG, Memory, and Tool, Vector Embedding.
+_No class and no oral review this week._

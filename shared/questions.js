@@ -4,7 +4,7 @@ const koTitles = [
   "수업 소개",
   "LLM과 프롬프트 엔지니어링 · 1",
   "LLM과 프롬프트 엔지니어링 · 2",
-  "지식 증강 AI 시스템 · 1",
+  "National Holiday (Choo-Suk)",
   "지식 증강 AI 시스템 · 2",
   "에이전트 AI 시스템 · 1",
   "에이전트 AI 시스템 · 2",
@@ -22,7 +22,7 @@ const topics = [
   ["foundation models", "파운데이션 모델"],
   ["few-shot prompting", "퓨샷 프롬프팅"],
   ["multimodal prompting", "멀티모달 프롬프팅"],
-  ["retrieval-augmented generation (RAG)", "검색 증강 생성(RAG)"],
+  null,
   ["memory and tools", "메모리와 도구"],
   [
     "single-agent and multi-agent systems",

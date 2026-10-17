@@ -22,10 +22,10 @@
   },
   {
     "id": 4,
-    "title": "Knowledge-Augmented AI Systems - Part 1",
-    "sourceSummary": "RAG, Memory, and Tool, Vector Embedding.",
+    "title": "National Holiday (Choo-Suk)",
+    "sourceSummary": "No class or oral review this week.",
     "source": "dasd2026/src/components/Schedule.jsx",
-    "reviewAvailable": true
+    "reviewAvailable": false
   },
   {
     "id": 5,

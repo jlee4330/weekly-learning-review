@@ -37,7 +37,7 @@ test("configurable cap allows two follow-ups", () => {
   }
 });
 test("completion preserves language, versions, and timestamps", () => {
-  let s = createSession(4, "ko", "a", "b");
+  let s = createSession(5, "ko", "a", "b");
   for (let i = 0; i < 4; i++)
     s = advance(appendAnswer(s, "개념 설명"), { action: "next" });
   assert.equal(s.status, "completed");
@@ -49,6 +49,7 @@ test("completion preserves language, versions, and timestamps", () => {
   assert.throws(() => appendAnswer(s, "extra"));
 });
 test("no-class weeks cannot start and blank answers cannot progress", () => {
+  assert.throws(() => createSession(4, "en", "a", "b"));
   assert.throws(() => createSession(8, "en", "a", "b"));
   assert.throws(() => createSession(16, "en", "a", "b"));
   assert.throws(() => appendAnswer(createSession(1, "en", "a", "b"), "  "));

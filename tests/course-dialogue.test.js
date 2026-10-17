@@ -24,9 +24,9 @@ test('Week 1 dialogue uses lecture content, not the old foundation-model-only dr
   assert(prompt.includes('Speak English only')); assert(prompt.includes('Then WAIT for the student'));
 });
 test('mismatched lecture weeks are not mixed into scheduled topics; Realtime stays English', () => {
-  assert.equal(weekContent(4).status,'schedule_only_lecture_week_mismatch');
-  assert(!weekContent(4).summary.includes('Single vs. Multi-Agent'));
-  const config = realtimeSession('ko',{mode:'conversation',weekId:4,language:'ko'});
+  assert.equal(weekContent(5).status,'schedule_only_lecture_week_mismatch');
+  assert(!weekContent(5).summary.includes('Single vs. Multi-Agent'));
+  const config = realtimeSession('ko',{mode:'conversation',weekId:5,language:'ko'});
   assert.equal(config.audio.input.transcription.language,'en');
   assert(config.instructions.includes('Vector Embedding'));
   assert(!config.instructions.includes('Single vs. Multi-Agent'));
