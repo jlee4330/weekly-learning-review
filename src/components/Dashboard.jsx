@@ -8,7 +8,7 @@ import TranscriptAudio from "./TranscriptAudio";
 
 // Instructor confirmed Week 2's deadline has passed (2026-10-17).
 // Missing records are marked in the dashboard; persisted late flags survive later submissions.
-const closedWeeks = [2];
+const closedWeeks = [2, 3, 5];
 
 const dur = (ms) => {
   if (ms == null) return "–";
@@ -31,7 +31,7 @@ const stage = (s) => {
 const ICON = { done: CheckCircle2, early: CircleAlert, open: CircleDashed };
 
 function LateBadge() {
-  return <span className="dash-status late" title="마감 후 기록 미제출로 확인됨"><CircleAlert size={14} />Late</span>;
+  return <span className="dash-status late" title="마감까지 미제출 또는 마감 후 제출"><CircleAlert size={14} />Late</span>;
 }
 
 function Progress({ s }) {

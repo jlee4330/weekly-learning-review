@@ -1,20 +1,101 @@
 {
   "week": 6,
-  "opening": "When might a service need multiple agents rather than a single agent?",
-  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "opening": "Why is basic RAG insufficient for complex information needs?",
+  "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
+  "note": "Ask the three questions in order. Require the learner’s own explanation, not keywords. Hints reduce the reasoning task: focus on one part, identify what it does, then connect it to the rest. Choose a hint for the actual gap rather than mechanically reading all hints. Never supply an answer or a worked example. After five completed unsuccessful hint-and-response exchanges on a question, move on without implying mastery.",
+  "sources": [
+    "dasd2026/src/components/lectures/Week6.jsx"
+  ],
   "questions": [
     {
       "id": "w06-q01",
-      "topic": "Agentic AI Systems - Part 1",
+      "type": "explain",
       "phase": "understand",
-      "question": "When might a service need multiple agents rather than a single agent?",
+      "topic": "Limits of basic RAG",
+      "objective": "Explain why a single vector search may not provide sufficient evidence for a complex information need.",
+      "question": "Why is basic RAG insufficient for complex information needs?",
+      "goodEnough": "Explains how the basic retrieve-then-generate approach can fail when an answer needs evidence spread across documents, broader context or multiple reasoning and retrieval steps. Explains at least two distinct limitations and why similar passages alone may not be sufficient or representative. Connects at least one limitation to a suitable response such as decomposing the query, retrieving at different levels, reranking or checking and correcting retrieval. Naming paper titles or every advanced architecture is not required; basic RAG can still suit simple local factual questions. Require the learner to explain relevant roles, relationships or reasons in their own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
-        "division of work",
-        "coordination cost",
-        "single-agent baseline"
+        "one vector search can miss evidence needed for different parts of a complex task",
+        "independent chunks may lose document structure, relationships or collection-wide patterns",
+        "similarity does not establish evidence coverage, freshness, agreement or sufficiency",
+        "retrieval can be rewritten, decomposed, repeated, organized hierarchically or evaluated according to the task",
+        "advanced retrieval improves support but does not guarantee correctness"
       ],
-      "followUps": [],
-      "misconceptions": []
+      "hints": [
+        "Start with the search step. What does a basic RAG system select to help answer a question?",
+        "Focus on a question with more than one part. How would you check whether the search found something for each part?",
+        "Think about the passages that were not selected. What might you still need from them?",
+        "Before writing an answer, what would you check about the evidence you found?",
+        "Choose one gap you identified. What could the system do next to fill it?"
+      ],
+      "misconceptions": [
+        "the most similar passages always contain enough evidence",
+        "retrieving more chunks always solves the problem",
+        "basic RAG is never useful",
+        "advanced RAG guarantees a correct answer"
+      ]
+    },
+    {
+      "id": "w06-q02",
+      "type": "explain",
+      "phase": "understand",
+      "topic": "Conversation history, persistent memory and LLM Wiki",
+      "objective": "Distinguish a conversation record, managed memory across sessions and maintained knowledge.",
+      "question": "What is the difference between conversation history, persistent memory, and an LLM Wiki?",
+      "goodEnough": "Explains all three in their own words: conversation history is a record of turns that can be supplied as context; persistent memory deliberately stores, selects, recalls and updates information across sessions; an LLM Wiki maintains organized, reusable knowledge pages derived from sources under maintenance rules. Explains how keeping raw turns differs from recalling selected memories and revising curated knowledge. Recognizes overlap: a wiki can support persistent memory and use retrieval, while merely saving chat logs does not provide effective memory management. Require the learner to explain relevant roles, relationships or reasons in their own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "conversation history records what was said; a saved log is not automatically useful context",
+        "persistent memory needs write, organize and read decisions beyond the current context window",
+        "memory may need updating, reinforcement or forgetting rather than remembering everything equally",
+        "LLM Wiki separates raw sources, curated knowledge pages and maintenance rules",
+        "wiki pages can be revised, merged, linked or superseded with source provenance and version history",
+        "LLM Wiki can use RAG and is not a model weight update"
+      ],
+      "hints": [
+        "Start with conversation history. What would you find if you opened that record?",
+        "When a new session starts, what would the application have to do to use something from an earlier session?",
+        "If that earlier information changes, what should happen to what the system remembers?",
+        "Now focus on a wiki page. What is on that page besides a copy of what someone said?",
+        "Use your answers to explain how recording a conversation, remembering useful information and maintaining a wiki differ."
+      ],
+      "misconceptions": [
+        "conversation history automatically stays in context forever",
+        "persistent memory means saving every message without selecting or updating anything",
+        "an LLM Wiki is just a folder of raw documents or chat transcripts",
+        "an LLM Wiki replaces all retrieval or permanently retrains the model",
+        "conventional memory cannot organize or update information"
+      ]
+    },
+    {
+      "id": "w06-q03",
+      "type": "explain",
+      "phase": "reflect",
+      "topic": "In-class LLM Wiki design and improvement",
+      "objective": "Explain a user-centered LLM Wiki prototype, its knowledge lifecycle and a justified improvement.",
+      "question": "How did you design your LLM Wiki in the in-class tutorial? Who is it for, how does it work, and how could you improve it?",
+      "goodEnough": "Describes the actual target user and recurring need, source materials, the maintained pages or entities and their relationships, and how the application uses that knowledge. Explains how incoming information creates or changes a page, and how the user inspects or uses the result. Proposes a specific improvement tied to a limitation and explains how to check whether it helps. Ground the discussion in the student’s own prototype or design; distinguish implemented or observed behavior from planned work. If the tutorial was not completed, do not invent participation or require a successful outcome. Require the learner to explain relevant roles, relationships or reasons in their own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "specific user, recurring activity and why accumulated knowledge is useful",
+        "source inputs may be real or simulated; their relevance is explained",
+        "wiki layer organizes concepts or entities rather than only storing raw sources",
+        "knowledge browser lets users inspect what the system knows; application interface visibly uses it",
+        "an update test connects new source information to a created, linked, revised or superseded page and changed behavior",
+        "improvement addresses a concrete gap such as source traceability, conflicting facts, update quality, lost detail or usability; proposed evaluation is distinguished from actual results"
+      ],
+      "hints": [
+        "Choose one source your app uses. What useful information should it get from that source?",
+        "Pick one page in your wiki. What does it contain, and how does the app use it?",
+        "Think of the new information you tested or planned to add. What should change on that page?",
+        "Choose one thing that did not work well or is still missing. What would you change, and how would you check it?"
+      ],
+      "misconceptions": [
+        "an LLM Wiki only needs document upload and search",
+        "adding a new record is always the same as updating knowledge",
+        "a polished interface alone demonstrates a maintained knowledge base",
+        "generated summaries are correct without checking their sources",
+        "planned improvements can be reported as tested results"
+      ]
     }
   ]
 }

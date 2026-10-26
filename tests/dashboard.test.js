@@ -103,3 +103,13 @@ test('transcript-only Week 3 mirrors recover week identity and completion', () =
   assert.equal(summary.talkMs, 50000);
   assert.equal(unpackSession('student~Week3', { transcript, status: 'in_progress' }, 'course').status, 'in_progress');
 });
+
+import { deadlineLateStudents, reviewDeadlines } from '../server/dashboard.js';
+test('Weeks 3 and 5 distinguish on-time, late, missing and unknown completion times', () => {
+ const make = (id, weekId, status, completedAt, messages=[]) => ({ id: `${id}~Week${weekId}`, weekId, status, completedAt, messages });
+ const records = [make('on-time',3,'completed',reviewDeadlines[3]), make('late',3,'completed','2026-10-24T00:00:00+09:00'), make('missing',1,'completed','2026-10-01T00:00:00Z'), make('unknown',3,'completed',null,[{text:'saved'}])];
+ assert.deepEqual(deadlineLateStudents(records, {}, Date.parse('2026-10-23T14:59:59Z')), {});
+ const result=deadlineLateStudents(records, {}, Date.parse('2026-10-26T00:00:00Z'));
+ assert.deepEqual(result[3], ['late','missing']);
+ assert.deepEqual(result[5], ['late','missing','on-time','unknown']);
+});

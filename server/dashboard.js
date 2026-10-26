@@ -117,8 +117,29 @@ export function summarize(session, content = contentFor(session.weekId)) {
   };
 }
 
+// Deadline includes the full 23:59 minute in Asia/Seoul.
+export const reviewDeadlines = { 3: '2026-10-23T23:59:59.999+09:00', 5: '2026-10-23T23:59:59.999+09:00' };
+export function deadlineLateStudents(all, saved = {}, now = Date.now()) {
+  const result = Object.fromEntries(Object.entries(saved).map(([week, ids]) => [week, [...ids]]));
+  const students = [...new Set(all.map(s => sessionKey(s.id) || s.studentId).filter(Boolean))];
+  for (const [week, deadline] of Object.entries(reviewDeadlines)) {
+    if (now <= Date.parse(deadline) || !students.length) continue;
+    const late = new Set(result[week] || []);
+    for (const student of students) {
+      const records = all.filter(s => (sessionKey(s.id) || s.studentId) === student && Number(s.weekId) === Number(week));
+      const onTime = records.some(s => s.status === 'completed' && s.completedAt && Date.parse(s.completedAt) <= Date.parse(deadline));
+      // A legacy transcript without a completion timestamp cannot establish lateness.
+      const unknown = records.some(s => s.status === 'completed' && !s.completedAt && s.messages?.length);
+      if (!onTime && !unknown) late.add(student);
+    }
+    result[week] = [...late].sort();
+  }
+  return result;
+}
+
 export async function dashboardData(store) {
-  const [all, lateStudentsByWeek] = await Promise.all([store.list(), store.dashboardLateStudents?.() || {}]);
+  const [all, savedLateStudents] = await Promise.all([store.list(), store.dashboardLateStudents?.() || {}]);
+  const lateStudentsByWeek = deadlineLateStudents(all, savedLateStudents);
   const sessions = all.filter((s) => s.mode === "conversation").map(s => {
     const summary = summarize(s);
     return { ...summary, late: (lateStudentsByWeek[s.weekId] || []).includes(summary.studentId) };

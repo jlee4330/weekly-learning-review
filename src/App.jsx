@@ -495,7 +495,7 @@ function App() {
               </div>
               <div className="week-list">
                 {weeks
-                  .filter((w) => w.id <= 5)
+                  .filter((w) => w.id <= 6)
                   .filter(
                     (w) =>
                       filter === "all" ||

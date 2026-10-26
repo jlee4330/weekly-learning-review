@@ -29,7 +29,8 @@ test('student overview shows both weeks and opens the saved Week 2 transcript', 
   await expect(a.getByRole('cell').nth(2)).toContainText('대화 시간 2m 00s');
   await expect(overview.getByRole('row').filter({ hasText: 'student-c' }).getByRole('cell').nth(1)).toContainText('대화 시간 –');
   await expect(overview.getByRole('row').filter({ hasText: 'student-d' }).getByRole('cell').nth(1)).toContainText('대화 시간 –');
-  await expect(overview.getByRole('row').filter({ hasText: 'student-b' })).toContainText('기록 없음');
+  await expect(overview.getByRole('row').filter({ hasText: 'student-b' }).getByRole('cell').nth(3)).toHaveText('Late');
+  await expect(overview.getByRole('row').filter({ hasText: 'student-b' }).getByRole('cell').nth(4)).toHaveText('Late');
   await expect(overview.getByRole('row').filter({ hasText: 'student-b' }).getByRole('cell').nth(2)).toHaveText('Late');
   await expect(overview.getByRole('row').filter({ hasText: 'student-c' }).getByRole('cell').nth(2)).toContainText('진행 중');
   await expect(a.getByRole('cell').nth(2)).toContainText('Late');

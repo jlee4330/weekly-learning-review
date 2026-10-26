@@ -37,10 +37,11 @@
   },
   {
     "id": 6,
-    "title": "Agentic AI Systems - Part 1",
-    "sourceSummary": "Single vs. Multi-Agent systems, Orchestration, Routing, and Hierarchical Patterns.",
-    "source": "dasd2026/src/components/Schedule.jsx",
-    "reviewAvailable": true
+    "title": "Knowledge-Augmented AI Systems - Part 2",
+    "sourceSummary": "Advanced retrieval, persistent memory, and LLM Wiki.",
+    "source": "dasd2026/src/components/lectures/Week6.jsx",
+    "reviewAvailable": true,
+    "description": "Advanced Retrieval and Persistent Memory"
   },
   {
     "id": 7,
