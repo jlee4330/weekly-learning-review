@@ -1,17 +1,11 @@
 ---
 week: 8
 title: Midterm Exam
-status: schedule_only
-scope: No exam in this course.
-source: dasd2026/src/components/Schedule.jsx
+status: no_review
+scope: Midterm Exam. No oral review scheduled.
+source: Instructor schedule update, 2026-11-12
 ---
 
 # Week 08 · Midterm Exam
 
-_No class and no oral review this week._
-
-> Only the schedule summary is available for this week. Do not invent lecture details beyond the scope below.
-
-## Scope
-
-No exam in this course.
+No oral review scheduled.

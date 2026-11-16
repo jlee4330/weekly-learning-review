@@ -495,7 +495,7 @@ function App() {
               </div>
               <div className="week-list">
                 {weeks
-                  .filter((w) => w.id <= 6)
+                  .filter((w) => w.id <= 9 && w.reviewAvailable)
                   .filter(
                     (w) =>
                       filter === "all" ||
@@ -516,12 +516,8 @@ function App() {
                         }
                         key={w.id}
                       >
-                        <div className="week-number">
-                          <small>{t("WEEK", "주차")}</small>
-                          {String(w.id).padStart(2, "0")}
-                        </div>
                         <div className="week-info">
-                          <h3>{titleOf(w, l)}</h3>
+                          <h3><span className="week-title-bullet" aria-hidden="true">•</span>{titleOf(w, l)}</h3>
                           <p>{objectiveOf(w, l)}</p>
                           <span className={`status ${progress}`}>
                             {progress === "done" ? (

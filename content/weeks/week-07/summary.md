@@ -1,15 +1,11 @@
 ---
 week: 7
-title: Agentic AI Systems - Part 2
-status: schedule_only_lecture_week_mismatch
-scope: Single vs. Multi-Agent systems, Orchestration, Routing, and Hierarchical Patterns.
-source: dasd2026/src/components/Schedule.jsx
+title: Mini Project 1 Presentation
+status: no_review
+scope: Mini Project 1 Presentation. No oral review scheduled.
+source: Instructor schedule update, 2026-11-12
 ---
 
-# Week 07 · Agentic AI Systems - Part 2
+# Week 07 · Mini Project 1 Presentation
 
-> Only the schedule summary is available for this week. Do not invent lecture details beyond the scope below.
-
-## Scope
-
-Single vs. Multi-Agent systems, Orchestration, Routing, and Hierarchical Patterns.
+No oral review scheduled.

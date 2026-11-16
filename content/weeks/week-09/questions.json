@@ -1,20 +1,70 @@
 {
-  "week": 9,
-  "opening": "What purpose could an LLM wiki serve in a knowledge-augmented AI service?",
-  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "opening": "Why is it important to evaluate AI at multiple levels rather than vibe-checking whether its answers seem good? Explain what should be evaluated at each of the following three levels: Model, System, Human Outcome.",
+  "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
   "questions": [
     {
       "id": "w09-q01",
-      "topic": "Knowledge-Augmented AI - Part 3",
+      "type": "explain",
       "phase": "understand",
-      "question": "What purpose could an LLM wiki serve in a knowledge-augmented AI service?",
-      "lookFor": [
-        "organized knowledge",
-        "provenance",
-        "updates"
+      "topic": "Systematic evaluation at three levels",
+      "question": "Why is it important to evaluate AI at multiple levels rather than vibe-checking whether its answers seem good? Explain what should be evaluated at each of the following three levels: Model, System, Human Outcome.",
+      "goodEnough": "Explains that a few plausible outputs on hand-picked examples do not establish reliable performance across users, tasks or failures. Describes explicit criteria and realistic test cases. Distinguishes model capability or output quality (such as accuracy, relevance, robustness or consistency), the complete system’s end-to-end performance across prompts, retrieval, tools, UI and failure handling, and effects on people (such as task quality, effort, appropriate reliance or control) compared with a meaningful baseline. Explains why success at one level does not guarantee success at the next; naming every metric is not required. Require an explanation in the learner’s own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "hints": [
+        "What can you learn from trying just a few answers?",
+        "Focus on the model alone. What would you check about what it produces?",
+        "Now consider the whole service. What has to happen for a user to finish a task?",
+        "After someone uses the service, what would you want to find out about their experience or results?",
+        "What would you compare those results with to decide whether the AI helped?"
       ],
-      "followUps": [],
-      "misconceptions": []
+      "misconceptions": [
+        "convincing wording or a few successful demos proves reliability",
+        "model accuracy alone measures the entire service",
+        "high satisfaction or trust necessarily means a better human outcome"
+      ]
+    },
+    {
+      "id": "w09-q02",
+      "type": "explain",
+      "phase": "understand",
+      "topic": "Precision and recall for classification",
+      "question": "An AI system checks emails and decides if they are spam or not spam. Use the confusion matrix to answer these questions. (a) What do false positive and false negative mean in this spam detection system? (b) What are precision and recall? How do you calculate them?",
+      "goodEnough": "Explains a false positive as a legitimate email incorrectly marked as spam (5), and a false negative as spam incorrectly marked as not spam (10). Defines precision as the share of emails marked as spam that really are spam, TP/(TP+FP), and recall as the share of all actual spam emails correctly caught, TP/(TP+FN). Applies these to the matrix: precision = 30/(30+5) = 30/35, about 85.7%; recall = 30/(30+10) = 30/40 = 75%. Accept correct fractions or equivalent verbal calculations without requiring exact percentages or memorized notation. Require an explanation in the learner’s own words; a list of keywords alone is insufficient. Do not require threshold selection, F1 or a discussion of which metric to prioritize.",
+      "hints": [
+        "Pick one cell in the table. What do its row and column tell you about those emails?",
+        "For a false positive, what did the AI decide, and what was the email really?",
+        "For a false negative, how did the AI’s decision differ from the actual email?",
+        "For precision, which group of emails belongs in your denominator?",
+        "For recall, which group belongs in your denominator?",
+        "Which cells would you use to calculate each fraction?"
+      ],
+      "misconceptions": [
+        "a false positive is a spam email left in the inbox",
+        "precision and recall use the same denominator",
+        "precision is the number of all correct decisions divided by 100",
+        "recall counts all emails marked as spam rather than all actual spam emails"
+      ],
+      "context": "The displayed confusion matrix contains 100 emails. Rows are actual labels and columns are predicted labels. Actual spam: 30 predicted spam and 10 predicted not spam. Actual not spam: 5 predicted spam and 55 predicted not spam. Spam is the positive class. The student can see the matrix while discussing this question. Use these counts when checking their explanation; do not reveal the calculations or answers."
+    },
+    {
+      "id": "w09-q03",
+      "type": "explain",
+      "phase": "connect",
+      "topic": "LLM-as-a-Judge in the learner’s completed project",
+      "question": "How did you use LLM-as-a-Judge in your project? Explain what the LLM judge evaluates, what information it receives, and what evaluation criteria it uses.",
+      "goodEnough": "Describes the LLM-as-a-Judge implementation in the learner’s own completed project: what specific output, artifact or behavior it evaluates; what information is actually sent to the judge, including the target and relevant task or reference context; and what rubric or criteria it applies. Connects those criteria to how the project produces judgments, scores, comparisons or feedback. Accept project-specific implementations and concise descriptions without requiring code, prompt quotations, numerical scores, every possible input, or a bias/reliability discussion. Do not invent details of the learner’s project. Require an explanation in the learner’s own words; a list of keywords alone is insufficient.",
+      "hints": [
+        "Think of one thing your project sends to the judge. What is it?",
+        "What happens just before your project calls the judge?",
+        "What information does your project put into that request?",
+        "Choose one criterion you used. What does it ask the judge to look for?",
+        "How does that criterion help the judge decide what feedback or result to return?"
+      ],
+      "misconceptions": [
+        "describing LLM judging in general without connecting it to the completed project is sufficient",
+        "the judge automatically knows project requirements that were never provided",
+        "generating the project’s main output is the same as evaluating that output",
+        "a score by itself explains the evaluation criteria"
+      ]
     }
   ]
 }

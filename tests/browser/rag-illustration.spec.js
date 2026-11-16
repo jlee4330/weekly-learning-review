@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-test('Week 5 diagram stays through question 2 hints and disappears for question 3 and closing', async ({ page }) => {
+for (const weekId of [5, 9]) {
+test(`Week ${weekId} illustration stays through question 2 hints and disappears for question 3 and closing`, async ({ page }) => {
   await page.goto('/');
-  await page.evaluate(async () => {
+  await page.evaluate(async (weekId) => {
     const React = (await import('/node_modules/.vite/deps/react.js')).default;
     const { default: { createRoot } } = await import('/node_modules/.vite/deps/react-dom_client.js');
     const { default: Review } = await import('/src/components/ConversationReview.jsx');
@@ -15,14 +16,14 @@ test('Week 5 diagram stays through question 2 hints and disappears for question 
     repository.messages = async () => {};
     window.ragTest = {
       say(text) { callbacks.onMessage({ id: `rag-${++order}`, role: 'assistant', text, order, revision: 1, complete: true }); },
-      guide: weekQuestions[5],
+      guide: weekQuestions[weekId],
     };
     const host = document.createElement('div'); document.body.replaceChildren(host);
     createRoot(host).render(React.createElement(Review, {
-      session: { id: 'rag-test', weekId: 5, language: 'en', messages: [], audioConsent: false },
+      session: { id: 'rag-test', weekId, language: 'en', messages: [], audioConsent: false },
       onUpdate() {}, onLeave() {}, onComplete() {},
     }));
-  });
+  }, weekId);
   await expect(page.getByText('I’m listening', { exact: true })).toBeVisible();
   const diagram = page.locator('.question-illustration img');
   await page.evaluate(() => window.ragTest.say(window.ragTest.guide.questions[0].question));
@@ -39,3 +40,5 @@ test('Week 5 diagram stays through question 2 hints and disappears for question 
   await page.evaluate(() => window.ragTest.say(window.ragTest.guide.closing));
   await expect(diagram).toHaveCount(0);
 });
+
+}

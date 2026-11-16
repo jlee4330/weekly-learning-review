@@ -45,24 +45,25 @@
   },
   {
     "id": 7,
-    "title": "Agentic AI Systems - Part 2",
-    "sourceSummary": "Single vs. Multi-Agent systems, Orchestration, Routing, and Hierarchical Patterns.",
-    "source": "dasd2026/src/components/Schedule.jsx",
-    "reviewAvailable": true
+    "title": "Mini Project 1 Presentation",
+    "sourceSummary": "Mini Project 1 Presentation. No oral review scheduled.",
+    "source": "Instructor schedule update, 2026-11-12",
+    "reviewAvailable": false
   },
   {
     "id": 8,
     "title": "Midterm Exam",
-    "sourceSummary": "No exam in this course.",
-    "source": "dasd2026/src/components/Schedule.jsx",
+    "sourceSummary": "Midterm Exam. No oral review scheduled.",
+    "source": "Instructor schedule update, 2026-11-12",
     "reviewAvailable": false
   },
   {
     "id": 9,
-    "title": "Knowledge-Augmented AI - Part 3",
-    "sourceSummary": "LLM wiki, OKF (Open Knowledge Format).",
-    "source": "dasd2026/src/components/Schedule.jsx",
-    "reviewAvailable": true
+    "title": "Evaluating AI Systems",
+    "sourceSummary": "Systematic evaluation, classification metrics, LLM-as-a-Judge, and user-centric evaluation.",
+    "source": "https://id40018.web.app/ — Week 09 Lecture Details",
+    "reviewAvailable": true,
+    "description": "Systematic evaluation at model, system, and human-outcome levels."
   },
   {
     "id": 10,

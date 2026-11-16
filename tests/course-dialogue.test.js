@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { weeks } from '../shared/questions.js';
 import { conversationInstructions } from '../shared/conversation-config.js';
+import { openingQuestions } from '../shared/course-dialogue.js';
 import { openingFor } from '../shared/course-dialogue.js';
 import { realtimeSession } from '../server/realtime.js';
 import { weekContent, parseSummary } from '../server/course-content.js';
@@ -12,7 +13,7 @@ test('every available week has an explicit course-specific opening', () => {
     const opening = openingFor(week);
     assert(opening.startsWith(`Hi! Welcome to your Week ${week.id}`));
     assert(opening.includes(week.title));
-    assert.equal((opening.match(/\?/g)||[]).length,1);
+    assert(opening.endsWith(openingQuestions[week.id]));
   }
 });
 test('Week 1 dialogue uses lecture content, not the old foundation-model-only draft', () => {
@@ -43,7 +44,7 @@ test('every week has a content folder with front matter and a question guide', (
 });
 
 test('released question guides require explanations and five non-answer-giving support exchanges', () => {
-  for (const id of [1, 2, 3, 5, 6]) {
+  for (const id of [1, 2, 3, 5, 6, 9]) {
     const content = weekContent(id);
     const prompt = conversationInstructions({ messages: [] }, weeks[id - 1], content);
     assert(prompt.includes('five completed hint-and-response exchanges'));

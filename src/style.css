@@ -1788,3 +1788,10 @@ main {padding-top:26px;}
 .question-illustration a { display:block; border-radius:12px; }
 .question-illustration img { display:block; width:100%; height:auto; border-radius:12px; }
 .question-illustration a:focus-visible { outline:3px solid #294d72; outline-offset:4px; }
+
+@media(max-width:600px) { .reviews-page .week-info { width:100%; } }
+
+.week-title-bullet { display:inline-block; margin-right:0.55em; color:#64778a; }
+
+.continuous-conversation .agent-card .agent-subquestions { margin-top:18px; color:#1c3147; }
+.continuous-conversation .agent-card .agent-subquestions p { margin:10px 0 0; font-size:clamp(18px,1.65vw,22px); line-height:1.6; font-weight:500; letter-spacing:-.01em; }
