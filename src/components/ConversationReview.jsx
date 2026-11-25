@@ -7,6 +7,7 @@ import { repository } from '../services/api';
 import { reviewErrorMessage } from '../services/errors';
 import { splitQuestion, reviewProgress } from '../services/question-split';
 import ragPipeline from '../assets/week05-rag-pipeline.png';
+import directManipulationAgents from '../assets/week10-direct-manipulation-agents.jpeg';
 import spamMatrix from '../assets/week09-spam-confusion-matrix.png';
 import { weekQuestions } from '../../content/weeks/index.js';
 
@@ -105,10 +106,12 @@ export default function ConversationReview({ session, deviceId, onUpdate, onComp
   const questionParts = Number(session.weekId) === 9 ? question.split(/\s+(?=\([a-b]\)\s)/) : [question];
   const progress = reviewProgress(messages, guide);
   const questionIllustrations = {
-    5: { src: ragPipeline, width: 1382, height: 882, label: 'Open RAG pipeline diagram at full size', alt: 'RAG pipeline: document preparation and indexing above, retrieval and answer generation below.' },
-    9: { src: spamMatrix, width: 1536, height: 1024, label: 'Open email confusion matrix at full size', alt: 'Email classification results for 100 emails. Actual spam: 30 predicted spam, 10 predicted not spam. Actual not spam: 5 predicted spam, 55 predicted not spam. Positive class: spam.' },
+    10: { question: 1, src: directManipulationAgents, width: 671, height: 457, label: 'Open direct manipulation and interface agents image at full size', alt: 'Direct Manipulation vs Interface Agents: Ben Shneiderman and Pattie Maes, excerpts from the IUI 1997 and CHI 1997 debates.' },
+    5: { question: 2, src: ragPipeline, width: 1382, height: 882, label: 'Open RAG pipeline diagram at full size', alt: 'RAG pipeline: document preparation and indexing above, retrieval and answer generation below.' },
+    9: { question: 2, src: spamMatrix, width: 1536, height: 1024, label: 'Open email confusion matrix at full size', alt: 'Email classification results for 100 emails. Actual spam: 30 predicted spam, 10 predicted not spam. Actual not spam: 5 predicted spam, 55 predicted not spam. Positive class: spam.' },
   };
-  const illustration = progress?.current === 2 && !progress.done ? questionIllustrations[Number(session.weekId)] : null;
+  const candidateIllustration = questionIllustrations[Number(session.weekId)];
+  const illustration = candidateIllustration && progress?.current === candidateIllustration.question && !progress.done ? candidateIllustration : null;
   useEffect(() => { const pin = () => { const el = stage.current; if (el) el.scrollTop = illustration ? 0 : el.scrollHeight; }; const frame = requestAnimationFrame(pin); document.fonts?.ready.then(pin); return () => cancelAnimationFrame(frame); }, [agent?.text, illustration?.src]);
   const labels = { connecting: t('Connecting…', '연결 중…'), listening: t('I’m listening', '이야기를 듣고 있어요'), thinking: t('Thinking with you…', '함께 생각하고 있어요…'), speaking: t('Speaking…', '학습 에이전트가 이야기하고 있어요'), paused: t('Conversation paused', '대화가 잠시 멈췄어요'), error: t('Connection interrupted', '연결이 끊어졌어요') };
   const micIssue = state === 'listening' && (signal === 'muted' || signal === 'disconnected');

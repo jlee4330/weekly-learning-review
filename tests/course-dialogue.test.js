@@ -44,7 +44,7 @@ test('every week has a content folder with front matter and a question guide', (
 });
 
 test('released question guides require explanations and five non-answer-giving support exchanges', () => {
-  for (const id of [1, 2, 3, 5, 6, 9]) {
+  for (const id of [1, 2, 3, 5, 6, 9, 10]) {
     const content = weekContent(id);
     const prompt = conversationInstructions({ messages: [] }, weeks[id - 1], content);
     assert(prompt.includes('five completed hint-and-response exchanges'));

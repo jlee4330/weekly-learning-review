@@ -67,10 +67,11 @@
   },
   {
     "id": 10,
-    "title": "Evaluating AI Systems - Part 1",
-    "sourceSummary": "Qualitative vs. Quantitative metrics for AI systems, LLM-as-a-Judge.",
-    "source": "dasd2026/src/components/Schedule.jsx",
-    "reviewAvailable": true
+    "title": "Human-AI Collaboration",
+    "sourceSummary": "Direct manipulation and intelligent agents; mixed-initiative interaction; steering AI outcomes, processes, roles and context.",
+    "source": "https://id40018.web.app/#/lecture/10 and linked W10 lecture slides",
+    "reviewAvailable": true,
+    "description": "Sharing initiative and control, and designing ways to steer AI."
   },
   {
     "id": 11,

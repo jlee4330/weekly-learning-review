@@ -1,20 +1,97 @@
 {
   "week": 10,
-  "opening": "What would you want to evaluate to know whether an AI service is useful to its users?",
-  "note": "Draft migrated from the earlier opening question and expected elements. Expand after the lecture content is added.",
+  "opening": "What is the difference between direct manipulation and delegating a task to an intelligent agent? Explain one benefit and one limitation of each approach, using an example from a design task.",
+  "closing": "That's the end of today's review. Nice work thinking these through. You can press End conversation whenever you're ready.",
+  "note": "Ask these three questions in order. Choose one short follow-up from hints based on what is missing in the learner’s explanation; do not read all hints as a checklist. Ask the learner to develop their own examples. Never reveal answers. Follow the shared five completed hint-and-response exchange limit before moving on without mastery.",
+  "sources": [
+    "https://id40018.web.app/#/lecture/10",
+    "https://docs.google.com/presentation/d/1rsBhK-gjSMNMMSdYwKshOWTirQLERsyCDpjFZ4mpwDE/edit"
+  ],
   "questions": [
     {
       "id": "w10-q01",
-      "topic": "Evaluating AI Systems - Part 1",
+      "type": "explain",
       "phase": "understand",
-      "question": "What would you want to evaluate to know whether an AI service is useful to its users?",
+      "topic": "Direct manipulation and intelligent agents",
+      "question": "What is the difference between direct manipulation and delegating a task to an intelligent agent? Explain one benefit and one limitation of each approach, using an example from a design task.",
+      "goodEnough": "Explains direct manipulation as acting on visible design objects with immediate feedback and typically reversible actions, and delegation as specifying goals while the agent chooses or performs steps. Gives a design-task example illustrating both approaches, with one explained benefit and limitation of each: direct control can support predictability and correction but demand effort or expertise; delegation can reduce operational work but misunderstand intent or make correction harder. Equivalent benefits and limitations grounded in the lecture are acceptable. Do not require researcher names or treating these approaches as mutually exclusive. Require an explanation in the learner’s own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
       "lookFor": [
-        "explicit criteria",
-        "fallible judge",
-        "human calibration"
+        "Visible objects, immediate feedback and reversible actions",
+        "Delegating goals rather than specifying every action",
+        "One benefit and limitation for each, connected to a design-task example"
       ],
-      "followUps": [],
-      "misconceptions": []
+      "hints": [
+        "Choose one design task you know. What would you do yourself in the interface?",
+        "What would you tell an agent if you wanted it to do that task?",
+        "Who chooses the steps in each version of your task?",
+        "What is one advantage of doing the edits yourself?",
+        "What could make doing those edits yourself difficult?",
+        "What work would the agent save you?",
+        "What might go wrong when the agent works from your request?"
+      ],
+      "misconceptions": [
+        "Direct manipulation means typing a detailed prompt",
+        "Delegation means the user has no goals, permissions or control",
+        "Either approach is always better for every task"
+      ]
+    },
+    {
+      "id": "w10-q02",
+      "type": "explain",
+      "phase": "connect",
+      "topic": "Mixed initiative and human approval",
+      "question": "What is mixed-initiative interaction? Describe a situation in a design workflow where AI should take the initiative and another where it should ask for human input or approval. Explain why.",
+      "goodEnough": "Explains that both the person and AI can initiate contributions as the workflow develops, rather than AI only responding to commands. Provides one design-workflow situation where AI should proactively contribute and another where it should request human input or approval, with a reason for each. Reasons may concern uncertainty about intent, expected benefit, interruption cost, permissions, risk or reversibility. Distinguishes initiating a suggestion from having authority to execute it. Accept that asking for approval can itself be AI-initiated; the two situations need not imply mutually exclusive categories. Do not require all four factors or equal human and AI participation. Require an explanation in the learner’s own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "Both participants can introduce a next step",
+        "Situation and justification for proactive AI contribution",
+        "Situation and justification for requesting human judgment or authorization",
+        "Initiative does not automatically confer execution authority"
+      ],
+      "hints": [
+        "In your workflow, who can suggest what happens next?",
+        "What could the AI notice that would make a suggestion useful?",
+        "Why would that be a good moment for the AI to speak up?",
+        "Choose a different moment when the AI should check with the person. What is unresolved?",
+        "What could happen if the AI acted at that moment without asking?",
+        "If AI suggests a change, who should decide whether it is carried out?"
+      ],
+      "misconceptions": [
+        "Mixed initiative just means that a human types and AI responds",
+        "AI taking initiative always means executing without permission",
+        "Human and AI must each do exactly half of the work",
+        "Delegating execution transfers accountability to the AI"
+      ]
+    },
+    {
+      "id": "w10-q03",
+      "type": "explain",
+      "phase": "connect",
+      "topic": "Steering targets and interface mechanisms",
+      "question": "Imagine you are designing an AI design assistant. What would you let users control at each of these three levels: Outcome, Process, and Actor & Context? Give one example for each and explain how users would express that control through the interface.",
+      "goodEnough": "Proposes a meaningful control for each target: Outcome controls the result’s content, form or qualities; Process controls steps, tools, order or checkpoints; Actor & Context controls the AI role, perspective, available information or operating conditions. For each, describes a concrete example and how the user communicates it through an interface, such as instructions, structured controls, references, direct manipulation or feedback. Connects the interface action to its effect on AI behavior. The same mechanism may serve multiple targets; three distinct mechanisms are not required. Do not require all six steering mechanisms. If discussing permission controls, distinguish enforced access restrictions from merely asking in a prompt. Require an explanation in the learner’s own words; a list of keywords alone is insufficient. Accept concise explanations and equivalent terminology.",
+      "lookFor": [
+        "Outcome example and how it is expressed",
+        "Process example and how it is expressed",
+        "Actor & Context example and how it is expressed",
+        "Distinguishes what users control from how they express it"
+      ],
+      "hints": [
+        "What kind of design would your assistant help someone create?",
+        "What is one thing a user should be able to change about the final result?",
+        "How would the user show the assistant that preference in your interface?",
+        "What is one choice the user could make about how the work is done?",
+        "How would the user communicate that choice?",
+        "What role or information would the user want the assistant to work with?",
+        "Where in your interface would the user choose that?"
+      ],
+      "misconceptions": [
+        "Steering only means editing the final output",
+        "Outcome, Process and Actor & Context are three input widgets",
+        "Every target requires a different interaction mechanism",
+        "A persona instruction provides real expertise or access permissions",
+        "A prompt alone enforces a read-only permission boundary"
+      ]
     }
   ]
 }
